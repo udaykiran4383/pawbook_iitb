@@ -12,12 +12,12 @@ This document provides a quick overview of all features delivered in this enhanc
 ### 🎥 How to Use PawBook
 Here is a quick walkthrough of how to navigate the site, view animal profiles, and share memories:
 
-![PawBook Demo](public/pawbook_demo.webp)
+![PawBook Demo](./public/pawbook_demo.webp)
 
 ### 🖼️ Screenshots
 | Homepage & Discover | Animal Profiles & Memories | Contributing & Uploading |
 | :---: | :---: | :---: |
-| ![Homepage](public/screenshot1.png) | ![Profile](public/screenshot2.png) | ![Upload Form](public/screenshot3.png) |
+| ![Homepage](./public/screenshot1.png) | ![Profile](./public/screenshot2.png) | ![Upload Form](./public/screenshot3.png) |
 
 ---
 
