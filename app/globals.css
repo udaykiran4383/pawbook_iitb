@@ -1,0 +1,281 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Vibrant Emotional Color System for PawBook */
+  --background: #FFF9F5;
+  --foreground: #2C2416;
+  --card: #FFFFFF;
+  --card-foreground: #2C2416;
+  --popover: #FFF9F5;
+  --popover-foreground: #2C2416;
+  --primary: #FF6B9D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFB347;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F0E6DB;
+  --muted-foreground: #8B7B6F;
+  --accent: #65DDB2;
+  --accent-foreground: #1A4D3C;
+  --destructive: #FF6B9D;
+  --destructive-foreground: #FFFFFF;
+  --border: #E8D4C4;
+  --input: #FFFFFF;
+  --ring: #FF6B9D;
+  --chart-1: #FF6B9D;
+  --chart-2: #65DDB2;
+  --chart-3: #FFB347;
+  --chart-4: #A78BFA;
+  --chart-5: #60A5FA;
+  --radius: 2rem;
+  --sidebar: #FFF9F5;
+  --sidebar-foreground: #2C2416;
+  --sidebar-primary: #FF6B9D;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FFB347;
+  --sidebar-accent-foreground: #2C2416;
+  --sidebar-border: #E8D4C4;
+  --sidebar-ring: #FF6B9D;
+}
+
+.dark {
+  --background: #2D1F1A;
+  --foreground: #FFF8F2;
+  --card: #3D2B24;
+  --card-foreground: #FFF8F2;
+  --popover: #2D1F1A;
+  --popover-foreground: #FFF8F2;
+  --primary: #D4A574;
+  --primary-foreground: #2D1F1A;
+  --secondary: #FFD4B4;
+  --secondary-foreground: #2D1F1A;
+  --muted: #5A4738;
+  --muted-foreground: #C4A894;
+  --accent: #B4E7D4;
+  --accent-foreground: #1A3D30;
+  --destructive: #E8B4A8;
+  --destructive-foreground: #FFF8F2;
+  --border: #4A3728;
+  --input: #3D2B24;
+  --ring: #D4A574;
+  --chart-1: #FFB4A2;
+  --chart-2: #B4E7D4;
+  --chart-3: #D4B4E8;
+  --chart-4: #FFE4B4;
+  --chart-5: #D4A5FF;
+  --sidebar: #2D1F1A;
+  --sidebar-foreground: #FFF8F2;
+  --sidebar-primary: #D4A574;
+  --sidebar-primary-foreground: #2D1F1A;
+  --sidebar-accent: #FFD4B4;
+  --sidebar-accent-foreground: #2D1F1A;
+  --sidebar-border: #4A3728;
+  --sidebar-ring: #D4A574;
+}
+
+@theme inline {
+  --font-sans: 'Nunito', 'Nunito Fallback', sans-serif;
+  --font-mono: 'Quicksand', 'Quicksand Fallback', sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrapbook-style paper texture */
+@layer utilities {
+  .scrapbook-card {
+    @apply rounded-3xl shadow-md transition-all duration-300;
+    box-shadow: 0 4px 12px rgba(74, 55, 40, 0.08), 0 2px 4px rgba(74, 55, 40, 0.04);
+  }
+
+  .scrapbook-card:hover {
+    @apply shadow-lg;
+    transform: translateY(-2px) rotate(0.5deg);
+  }
+
+  .paw-print {
+    @apply inline-block;
+    font-size: 1rem;
+  }
+
+  /* Animate paw ripple on click */
+  @keyframes paw-ripple {
+    0% {
+      box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 12px rgba(212, 165, 116, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(212, 165, 116, 0);
+    }
+  }
+
+  .paw-ripple {
+    animation: paw-ripple 0.6s;
+  }
+
+  /* Handwritten text feel */
+  .handwritten {
+    font-family: 'Quicksand', sans-serif;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  /* Soft gradient backgrounds for cards */
+  .bg-peach-soft {
+    background: linear-gradient(135deg, #FFD4B4 0%, #FFE4C4 100%);
+  }
+
+  .bg-mint-soft {
+    background: linear-gradient(135deg, #B4E7D4 0%, #C4F0E0 100%);
+  }
+
+  .bg-lavender-soft {
+    background: linear-gradient(135deg, #D4B4E8 0%, #E4C4F8 100%);
+  }
+
+  .bg-blue-soft {
+    background: linear-gradient(135deg, #B4D4E8 0%, #C4E4F8 100%);
+  }
+
+  /* Heart bounce animation */
+  @keyframes heart-bounce {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+  }
+
+  .heart-bounce {
+    animation: heart-bounce 0.6s;
+  }
+
+  /* Walking dog animation */
+  @keyframes dog-walk {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+  }
+
+  .dog-walking {
+    animation: dog-walk 1s infinite;
+  }
+
+  /* Hand-drawn sketch effect */
+  .sketch-border {
+    border: 2px solid currentColor;
+    border-radius: 2rem;
+    position: relative;
+  }
+
+  .sketch-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid currentColor;
+    border-radius: 2rem;
+    opacity: 0.3;
+    filter: blur(0.5px);
+  }
+
+  /* Soft shadow for depth */
+  .soft-shadow {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.05),
+      0 4px 8px rgba(0, 0, 0, 0.08),
+      0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Sticky note effect */
+  .sticky-note {
+    transform: rotate(-1deg);
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .sticky-note:nth-child(2n) {
+    transform: rotate(1.5deg);
+  }
+
+  .sticky-note:hover {
+    transform: rotate(0deg) scale(1.02);
+  }
+
+  /* Smooth transitions */
+  .smooth-transition {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Badge styles */
+  .badge-pulse {
+    animation: badge-pulse 2s infinite;
+  }
+
+  @keyframes badge-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Glow effect for highlighted elements */
+  .glow-effect {
+    box-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
+  }
+}
