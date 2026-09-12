@@ -30,8 +30,13 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
 
   const duplicates = useMemo(() => {
     if (!formData.name || !formData.location) return [];
-    return detectDuplicates(animals as any, formData.name, formData.location, 0.65);
-  }, [formData.name, formData.location, animals]);
+    // Species is passed so a cat can no longer flag a dog with a similar name.
+    return detectDuplicates(animals as any, {
+      name: formData.name,
+      location: formData.location,
+      animal_type: formData.animalType,
+    });
+  }, [formData.name, formData.location, formData.animalType, animals]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,9 +166,16 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 <AlertTriangle className="text-amber-600 flex-shrink-0" size={20} />
                 <div>
                   <h3 className="font-semibold text-amber-900">👀 Similar friend found!</h3>
-                  <p className="text-sm text-amber-700 mt-1">
-                    {duplicates.map(d => `${d.name} at ${d.location}`).join(', ')} — {Math.round(duplicates[0].similarity * 100)}% match
-                  </p>
+                  {/* A bare percentage is not actionable. Say which animal and
+                      why it matched, so the reporter can judge for themselves. */}
+                  <ul className="text-sm text-amber-700 mt-1 space-y-0.5">
+                    {duplicates.slice(0, 3).map(d => (
+                      <li key={d.animalId}>
+                        <span className="font-bold">{d.name}</span> at {d.location}
+                        {d.reasons.length > 0 && <span className="text-xs"> — {d.reasons.join(', ')}</span>}
+                      </li>
+                    ))}
+                  </ul>
                   <p className="text-xs text-amber-700 mt-1">If this is the same animal, please update that profile instead of creating a new one.</p>
                 </div>
               </div>
