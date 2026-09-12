@@ -39,15 +39,11 @@ export function compressImage(file: File, maxWidth = 800, quality = 0.7): Promis
   });
 }
 
-export function getUserName(): string {
-  if (typeof window === 'undefined') return 'Someone';
-  let name = localStorage.getItem('pawbook_user_name');
-  if (!name) {
-    name = window.prompt("What is your name? (This will be shown when you care for animals)") || 'Anonymous Student';
-    localStorage.setItem('pawbook_user_name', name);
-  }
-  return name;
-}
+// Kept here so the existing call sites do not all have to change. The
+// implementation moved to lib/identity.ts, which no longer prompts: nobody is
+// asked for a name, and contributions are anonymous unless someone chooses a
+// handle deliberately.
+export { getUserName } from './identity';
 
 export function getDisplayActorName(name: string | undefined, fallbackName = 'Someone'): string {
   if (!name) return fallbackName;

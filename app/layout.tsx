@@ -3,6 +3,7 @@ import { Nunito, Quicksand } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import ThemeToggle from '@/components/theme-toggle'
+import IdentityControl from '@/components/identity-control'
 
 const nunito = Nunito({ subsets: ["latin"] });
 const quicksand = Quicksand({ subsets: ["latin"] });
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ThemeToggle />
+          <IdentityControl />
           {children}
         </ThemeProvider>
       </body>
