@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, SupabaseAdminUnavailableError } from '@/lib/supabase-admin';
 import { redisDel, redisGetJSON, redisRateLimited, redisSetJSON } from '@/lib/redis-cache';
 import { mergeState } from '@/lib/state-merge';
 import { checkStateId, checkStatePayload, clientIp } from '@/lib/state-guard';
@@ -38,6 +38,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: value, source: 'database' }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof SupabaseAdminUnavailableError) {
+      return NextResponse.json({ error: 'Storage is not configured.' }, { status: 503 });
+    }
     return NextResponse.json({ error: error?.message || 'Unknown error' }, { status: 500 });
   }
 }
@@ -84,6 +87,9 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ ok: true, data: merged }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof SupabaseAdminUnavailableError) {
+      return NextResponse.json({ error: 'Storage is not configured.' }, { status: 503 });
+    }
     return NextResponse.json({ error: error?.message || 'Unknown error' }, { status: 500 });
   }
 }
@@ -110,6 +116,9 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof SupabaseAdminUnavailableError) {
+      return NextResponse.json({ error: 'Storage is not configured.' }, { status: 503 });
+    }
     return NextResponse.json({ error: error?.message || 'Unknown error' }, { status: 500 });
   }
 }
