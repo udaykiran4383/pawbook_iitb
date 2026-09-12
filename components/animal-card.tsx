@@ -8,6 +8,7 @@ import type { Animal, Comment } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
 import { getFallbackAvatar } from '@/lib/animal-avatar';
+import { animalPath } from '@/lib/animal-slug';
 import { optimizeImageUrl } from '@/lib/image-url';
 
 // Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
@@ -30,6 +31,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState('');
   const [sharing, setSharing] = useState(false);
+  const [shareNote, setShareNote] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(animal.profile_image);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,15 +54,16 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const handleShare = async () => {
     setSharing(true);
     try {
+      // window.location.href meant sharing any animal shared the homepage.
+      const url = new URL(animalPath(animal), window.location.origin).toString();
+      const text = `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`;
+
       if (navigator.share) {
-        await navigator.share({
-          title: `${animal.name} - PawBook IITB`,
-          text: `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`,
-          url: window.location.href,
-        });
+        await navigator.share({ title: `${animal.name} - PawBook IITB`, text, url });
       } else {
-        await navigator.clipboard.writeText(`Meet ${animal.name} at ${animal.location}! 🐾`);
-        alert('Link copied! Share it with your friends 🐾');
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        setShareNote('Link copied! 🐾');
+        window.setTimeout(() => setShareNote(null), 2000);
       }
     } catch { }
     setSharing(false);
@@ -229,7 +232,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
 
         <button onClick={handleShare} disabled={sharing} className="flex flex-col items-center gap-1 transition-all active:scale-90 text-muted-foreground hover:text-green-500 disabled:opacity-50">
           <Share2 size={22} />
-          <span className="text-xs font-bold text-foreground">Share</span>
+          <span className="text-xs font-bold text-foreground">{shareNote ?? 'Share'}</span>
         </button>
       </div>
 
