@@ -185,7 +185,7 @@ export default async function AnimalPage({ params }: PageProps) {
                   >
                     <p className="text-sm text-foreground">{memory?.content ?? memory?.text}</p>
                     {memory?.author && (
-                      <p className="text-xs text-muted-foreground mt-1">— {memory.author}</p>
+                      <p className="text-xs text-muted-foreground mt-1">— a student</p>
                     )}
                   </li>
                 ))}
@@ -201,7 +201,7 @@ export default async function AnimalPage({ params }: PageProps) {
               <ul className="space-y-2">
                 {comments.map((comment: any, index: number) => (
                   <li key={comment?.id ?? index} className="text-sm">
-                    <span className="font-bold text-foreground">{comment?.author ?? 'Someone'}</span>{' '}
+                    <span className="font-bold text-foreground">A student</span>{' '}
                     <span className="text-foreground">{comment?.text}</span>
                   </li>
                 ))}
@@ -213,7 +213,17 @@ export default async function AnimalPage({ params }: PageProps) {
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Clock size={12} />
               Added {animal.created_at ? formatTimeSince(new Date(animal.created_at)) : 'a while ago'}
-              {animal.contributor ? ` by ${animal.contributor}` : ''}
+              {/*
+                Contributor and feeder names are deliberately withheld on this
+                public, linkable page. Para 74 of 2026 INSC 506 (19 May 2026)
+                makes campus animal groups file a liability affidavit, which
+                turns "who feeds this dog" into a legal and personal-safety
+                question rather than a credit line. WAG, the animal welfare
+                group actually operating at IITB, publishes no member directory
+                and renders even its email as an image. Names still appear
+                inside the app to the people contributing; they do not belong on
+                a page anyone can find, scrape, or reach from a printed QR code.
+              */}
             </p>
           </footer>
         </article>
