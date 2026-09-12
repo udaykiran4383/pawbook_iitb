@@ -13,6 +13,7 @@ import { optimizeImageUrl } from '@/lib/image-url';
 import CareTracker from '@/components/care-tracker';
 import TrustBadge from '@/components/trust-badge';
 import DictateButton from '@/components/dictate-button';
+import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memory-prompts';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -33,6 +34,9 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const [liked, setLiked] = useState(false);
   const [showMemoryForm, setShowMemoryForm] = useState(false);
   const [memoryForm, setMemoryForm] = useState({ text: '', memory_type: 'happy' as StudentMemory['memory_type'] });
+  // The question someone picked to answer, used as the placeholder so the box
+  // stops being blank. Not saved — the memory should stand on its own.
+  const [memoryPrompt, setMemoryPrompt] = useState<string | null>(null);
   const [showMedicalForm, setShowMedicalForm] = useState(false);
   const [newMedicalRecord, setNewMedicalRecord] = useState<Partial<MedicalRecord>>({});
 
@@ -343,7 +347,15 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {activeTab === 'memories' && (
             <div className="space-y-3">
               <button
-                onClick={() => setShowMemoryForm(!showMemoryForm)}
+                onClick={() => {
+                  // Open on the right set of questions: a memorial should not
+                  // lead with "what do they do when they see you coming?".
+                  if (!showMemoryForm) {
+                    setMemoryForm(f => ({ ...f, memory_type: defaultMemoryKind(isDeceased) }));
+                    setMemoryPrompt(null);
+                  }
+                  setShowMemoryForm(!showMemoryForm);
+                }}
                 className="w-full flex items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-3 rounded-xl active:scale-[0.98] transition border border-purple-200"
               >
                 <Plus size={18} />
@@ -354,7 +366,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
                   <select
                     value={memoryForm.memory_type}
-                    onChange={e => setMemoryForm(f => ({ ...f, memory_type: e.target.value as any }))}
+                    onChange={e => {
+                      setMemoryForm(f => ({ ...f, memory_type: e.target.value as any }));
+                      setMemoryPrompt(null);
+                    }}
                     className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:border-purple-400"
                   >
                     <option value="happy">😊 Happy Moment</option>
@@ -363,10 +378,35 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                     <option value="tribute">🌹 Tribute</option>
                     <option value="goodbye">👋 Last Goodbye</option>
                   </select>
+                  {/* A blank box asks someone to be a writer. A question asks
+                      them to be a witness, which is a much smaller thing. */}
+                  <div>
+                    <p className="text-xs font-bold text-purple-900 dark:text-foreground mb-1.5">
+                      Not sure where to start?
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {getMemoryPrompts(memoryForm.memory_type as MemoryKind, animal.id).map(prompt => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => setMemoryPrompt(prompt)}
+                          aria-pressed={memoryPrompt === prompt}
+                          className={`text-xs rounded-full px-3 py-1.5 border transition text-left ${
+                            memoryPrompt === prompt
+                              ? 'bg-purple-500 text-white border-purple-500'
+                              : 'bg-white dark:bg-card text-foreground border-purple-200 dark:border-border hover:border-purple-400'
+                          }`}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <textarea
                     value={memoryForm.text}
                     onChange={e => setMemoryForm(f => ({ ...f, text: e.target.value }))}
-                    placeholder="Share your experience, your memory of this animal..."
+                    placeholder={memoryPrompt ?? 'Share your experience, your memory of this animal...'}
+                    aria-label={memoryPrompt ?? 'Your memory'}
                     rows={4}
                     className="w-full px-3 py-2 border border-purple-200 dark:border-border rounded-lg text-sm focus:outline-none focus:border-purple-400 resize-none bg-white dark:bg-card text-foreground"
                   />
