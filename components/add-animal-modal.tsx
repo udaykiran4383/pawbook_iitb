@@ -6,6 +6,7 @@ import { detectDuplicates } from '@/lib/duplicate-detection';
 import { getUserName } from '@/lib/utils';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
 import type { Animal } from '@/lib/demo-data';
+import { optimizeImageUrl } from '@/lib/image-url';
 
 interface AddAnimalModalProps {
   animals: Animal[];
@@ -102,7 +103,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               <div key={a.id} className="flex flex-col items-center flex-shrink-0 w-16">
                 <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-200 overflow-hidden flex items-center justify-center text-xl shadow-sm">
                   {a.profile_image ? (
-                    <img src={a.profile_image} alt={a.name} className="w-full h-full object-cover" />
+                    <img src={optimizeImageUrl(a.profile_image, { width: 96 })} alt={a.name} className="w-full h-full object-cover" />
                   ) : (
                     a.animal_type === 'cat' ? '🐱' : a.animal_type === 'dog' ? '🐕' : a.animal_type === 'leopard' ? '🐆' : a.animal_type === 'crocodile' ? '🐊' : '🐾'
                   )}

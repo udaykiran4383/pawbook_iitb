@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Heart, Plus, Calendar, X } from 'lucide-react';
+import { optimizeImageUrl } from '@/lib/image-url';
 
 interface EmotionalMemory {
   id: string;
@@ -218,7 +219,7 @@ export default function EmotionalMemoriesSection({
                 <div className="border-t-2 border-gray-200 p-4 bg-gray-50 space-y-3">
                   {memory.photo_url && (
                     <img
-                      src={memory.photo_url}
+                      src={optimizeImageUrl(memory.photo_url, { width: 600 })}
                       alt="Memory photo"
                       className="w-full h-40 object-cover rounded-lg"
                     />

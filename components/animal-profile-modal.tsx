@@ -8,14 +8,12 @@ import { useImageStore } from '@/lib/image-store';
 import type { Animal, Comment, StudentMemory, MedicalRecord } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
+import { getFallbackAvatar } from '@/lib/animal-avatar';
+import { optimizeImageUrl } from '@/lib/image-url';
 
 const EMPTY_IMAGES: any[] = [];
 
-function getDefaultAvatar(animal: Animal) {
-  const seed = encodeURIComponent(animal.name);
-  const bg = animal.animal_type === 'cat' ? 'c0aede' : animal.animal_type === 'dog' ? 'ffdfbf' : 'b6e3f4';
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${bg}`;
-}
+
 
 interface AnimalProfileModalProps {
   animal: Animal;
@@ -130,7 +128,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
     setShowMedicalForm(false);
   };
 
-  const avatarSrc = profileImage || getDefaultAvatar(animal);
+  const avatarSrc = profileImage ? optimizeImageUrl(profileImage, { width: 600 }) : getFallbackAvatar(animal);
   const lastSeenBy = getDisplayActorName(animal.last_seen_by, animal.contributor);
   const lastFedBy = getDisplayActorName(animal.last_fed_by, animal.contributor);
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);
@@ -323,7 +321,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 <div className="grid grid-cols-2 gap-3">
                   {storedImages.map(img => (
                     <div key={img.id} className="rounded-xl overflow-hidden shadow-md border border-gray-100">
-                      <img src={img.url} alt={img.caption} className="w-full h-32 object-cover" />
+                      <img src={optimizeImageUrl(img.url, { width: 400 })} alt={img.caption} className="w-full h-32 object-cover" />
                       <div className="p-2 bg-white">
                         <p className="text-xs font-bold text-foreground truncate">{img.caption}</p>
                         <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>{formatTimeSince(new Date(img.uploadedAt))}</p>

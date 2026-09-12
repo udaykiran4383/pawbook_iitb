@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Heart, BookHeart, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatTimeSince } from '@/lib/care-tracking';
 import type { Animal } from '@/lib/demo-data';
+import { getAnimalAvatar } from '@/lib/animal-avatar';
 
 interface RainbowBridgeProps {
   animals: Animal[];
@@ -45,7 +46,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative">
                     <img
-                      src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(animal.name)}&backgroundColor=c0aede`}
+                      src={getAnimalAvatar(animal, 200)}
                       alt={animal.name}
                       className="w-20 h-20 rounded-full border-3 border-purple-300 shadow-lg object-cover grayscale-[20%]"
                     />

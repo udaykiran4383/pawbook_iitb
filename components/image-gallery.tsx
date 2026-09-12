@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Heart, Trash2, Plus, X } from 'lucide-react';
 import { useImageStore } from '@/lib/image-store';
 import ImageUpload from './image-upload';
+import { optimizeImageUrl } from '@/lib/image-url';
 
 interface ImageGalleryProps {
   animalId: number;
@@ -56,7 +57,7 @@ export default function ImageGallery({ animalId, animalName }: ImageGalleryProps
             {images.map((image) => (
               <div key={image.id} className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition border-2 border-white/50">
                 <img
-                  src={image.url}
+                  src={optimizeImageUrl(image.url, { width: 400 })}
                   alt={image.caption}
                   className="w-full h-40 object-cover group-hover:scale-110 transition cursor-pointer"
                   onClick={() => setSelectedImage(image.id)}
@@ -115,7 +116,7 @@ export default function ImageGallery({ animalId, animalName }: ImageGalleryProps
               <X size={32} />
             </button>
             <img
-              src={images.find(img => img.id === selectedImage)?.url}
+              src={optimizeImageUrl(images.find(img => img.id === selectedImage)?.url, { width: 1200 })}
               alt="Full size"
               className="w-full h-auto rounded-2xl"
             />

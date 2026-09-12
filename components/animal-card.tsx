@@ -7,13 +7,10 @@ import { getDisplayActorName, getUserName } from '@/lib/utils';
 import type { Animal, Comment } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
+import { getFallbackAvatar } from '@/lib/animal-avatar';
+import { optimizeImageUrl } from '@/lib/image-url';
 
-// Default avatar based on animal type
-function getDefaultAvatar(animal: Animal) {
-  const seed = encodeURIComponent(animal.name);
-  const bg = animal.animal_type === 'cat' ? 'c0aede' : animal.animal_type === 'dog' ? 'ffdfbf' : 'b6e3f4';
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${bg}`;
-}
+// Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
 
 const bgGradients = [
   'from-pink-100 to-purple-100',
@@ -94,7 +91,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
     }
   }, [animal.id]);
 
-  const avatarSrc = profileImage || getDefaultAvatar(animal);
+  const avatarSrc = profileImage ? optimizeImageUrl(profileImage, { width: 200 }) : getFallbackAvatar(animal);
   const lastSeenBy = getDisplayActorName(animal.last_seen_by, animal.contributor);
   const lastFedBy = getDisplayActorName(animal.last_fed_by, animal.contributor);
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);

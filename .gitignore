@@ -9,3 +9,10 @@ node_modules
 .env*.local
 .DS_Store
 .vercel
+.env*
+
+# Database backups / dumps — never commit
+*.backup.gz
+*.storage.zip
+*.dump
+*.sql.gz

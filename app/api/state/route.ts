@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { redisDel, redisGetJSON, redisSetJSON } from '@/lib/redis-cache';
+import { mergeState } from '@/lib/state-merge';
 
 const CACHE_TTL_SECONDS = 90;
 const cacheKey = (id: string) => `pawbook:state:${id}`;
@@ -45,12 +46,30 @@ export async function PUT(request: Request) {
     const { id, data } = body || {};
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    const { error } = await supabaseAdmin.from('pawbook_state').upsert({ id, data });
+    // Every client writes the whole state blob, so a plain upsert loses whatever
+    // another student added since this client last loaded. Merge against the
+    // stored row instead, so concurrent writes converge. See lib/state-merge.ts.
+    const { data: existing, error: readError } = await supabaseAdmin
+      .from('pawbook_state')
+      .select('data')
+      .eq('id', id)
+      .single();
+
+    // PGRST116 = no row yet, which is a normal first write.
+    if (readError && readError.code !== 'PGRST116') {
+      return NextResponse.json({ error: readError.message }, { status: 500 });
+    }
+
+    const merged = existing?.data ? mergeState(existing.data, data) : data;
+
+    const { error } = await supabaseAdmin
+      .from('pawbook_state')
+      .upsert({ id, data: merged, updated_at: new Date().toISOString() });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    await redisSetJSON(cacheKey(id), data, CACHE_TTL_SECONDS);
+    await redisSetJSON(cacheKey(id), merged, CACHE_TTL_SECONDS);
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return NextResponse.json({ ok: true, data: merged }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Unknown error' }, { status: 500 });
   }
