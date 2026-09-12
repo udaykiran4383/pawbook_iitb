@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Heart, BookHeart, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatTimeSince } from '@/lib/care-tracking';
 import type { Animal } from '@/lib/demo-data';
+import { getAnimalAvatar } from '@/lib/animal-avatar';
 
 interface RainbowBridgeProps {
   animals: Animal[];
@@ -38,14 +39,14 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
             {animals.map(animal => (
               <div
                 key={animal.id}
-                className="bg-gradient-to-br from-purple-50 via-pink-50 to-white rounded-3xl border-2 border-purple-200/40 p-6 shadow-md hover:shadow-lg transition-all cursor-pointer group"
+                className="bg-gradient-to-br from-purple-50 via-pink-50 to-white dark:from-card dark:via-card dark:to-card rounded-3xl border-2 border-purple-200/40 p-6 shadow-md hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => onOpenProfile(animal)}
               >
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative">
                     <img
-                      src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(animal.name)}&backgroundColor=c0aede`}
+                      src={getAnimalAvatar(animal, 200)}
                       alt={animal.name}
                       className="w-20 h-20 rounded-full border-3 border-purple-300 shadow-lg object-cover grayscale-[20%]"
                     />
@@ -74,7 +75,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {animal.personality_tags.map((tag, i) => (
-                    <span key={i} className="bg-white/80 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-foreground">
+                    <span key={i} className="bg-white/80 dark:bg-card px-2.5 py-0.5 rounded-full text-[10px] font-bold text-foreground">
                       {tag}
                     </span>
                   ))}
@@ -89,7 +90,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
 
                 {/* Top memory preview */}
                 {animal.memories.length > 0 && (
-                  <div className="bg-white/60 rounded-xl p-3 border border-purple-100">
+                  <div className="bg-white dark:bg-card/60 rounded-xl p-3 border border-purple-100">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-bold text-foreground">{animal.memories[0].author}</span>
                       <span className="text-[10px] text-muted-foreground">{formatTimeSince(new Date(animal.memories[0].timestamp))}</span>

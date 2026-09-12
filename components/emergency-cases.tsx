@@ -1,41 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useAnimalStore } from '@/lib/animal-store';
+import { getUserName } from '@/lib/utils';
+import { sortEmergencies, type EmergencyCase } from '@/lib/emergency';
 import { AlertCircle, X, Upload } from 'lucide-react';
 import ImageUpload from './image-upload';
 
-interface EmergencyCase {
-  id: number;
-  description: string;
-  severity: 'critical' | 'urgent' | 'moderate';
-  location: string;
-  images: string[];
-  timestamp: string;
-  resolved: boolean;
-}
-
 export default function EmergencyCases() {
   const [showModal, setShowModal] = useState(false);
-  const [cases, setCases] = useState<EmergencyCase[]>(() => [
-    {
-      id: 1,
-      description: 'Dog with visible injury near sports complex',
-      severity: 'critical',
-      location: 'Sports Complex',
-      images: [],
-      timestamp: new Date().toISOString(),
-      resolved: false,
-    },
-    {
-      id: 2,
-      description: 'Kitten stuck in tree near library',
-      severity: 'urgent',
-      location: 'Library Entrance',
-      images: [],
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      resolved: false,
-    },
-  ]);
+  // Reports come from the shared store, so they survive a reload and are
+  // visible to everyone. This list used to be seeded in useState with two
+  // invented reports — a "critical" injured dog at the sports complex among
+  // them — which rendered on the homepage indistinguishably from real ones.
+  const stored = useAnimalStore((state) => state.emergencies);
+  const cases = useMemo(() => sortEmergencies(Array.isArray(stored) ? stored : []), [stored]);
   const [formData, setFormData] = useState({
     description: '',
     severity: 'urgent' as const,
@@ -73,14 +52,15 @@ export default function EmergencyCases() {
     if (!formData.description.trim() || !formData.location.trim()) return;
 
     const newCase: EmergencyCase = {
-      id: Math.max(...cases.map(c => c.id), 0) + 1,
+      id: `er_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       ...formData,
       images: [],
       timestamp: new Date().toISOString(),
       resolved: false,
+      responders: [],
     };
 
-    setCases(prevCases => [newCase, ...prevCases]);
+    useAnimalStore.getState().addEmergency(newCase);
     setFormData({ description: '', severity: 'urgent', location: '' });
     setShowModal(false);
   };
@@ -127,9 +107,35 @@ export default function EmergencyCases() {
                 <span>{emergencyCase.location}</span>
               </div>
 
-              <button className="w-full bg-white/70 hover:bg-white text-foreground py-2 rounded-lg font-bold text-sm transition">
-                Help This Case
-              </button>
+              {/* This button previously had no onClick at all — it looked
+                  actionable and did nothing. */}
+              {emergencyCase.resolved ? (
+                <p className="w-full text-center py-2 text-sm font-bold text-green-700 dark:text-green-400">
+                  ✅ Resolved
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {emergencyCase.responders.length > 0 && (
+                    <p className="text-xs text-center text-foreground/80">
+                      {emergencyCase.responders.length} {emergencyCase.responders.length === 1 ? 'person is' : 'people are'} on the way
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => useAnimalStore.getState().respondToEmergency(emergencyCase.id, getUserName())}
+                      className="flex-1 bg-white/70 dark:bg-card hover:bg-white text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95"
+                    >
+                      I'm Helping
+                    </button>
+                    <button
+                      onClick={() => useAnimalStore.getState().resolveEmergency(emergencyCase.id)}
+                      className="flex-1 border border-white/60 dark:border-border text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95 hover:bg-white/40"
+                    >
+                      Mark Resolved
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

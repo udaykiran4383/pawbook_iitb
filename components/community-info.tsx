@@ -35,7 +35,7 @@ export default function CommunityInfo() {
           {expandedSection === 'rules' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
         {expandedSection === 'rules' && (
-          <div className="bg-white border-2 border-amber-100 border-t-0 rounded-b-2xl p-5 space-y-3">
+          <div className="bg-white dark:bg-card border-2 border-amber-100 border-t-0 rounded-b-2xl p-5 space-y-3">
             {[
               { num: 1, text: 'Any animal is allowed.', emoji: '🐾' },
               { num: 2, text: 'Only self-clicked pics allowed.', emoji: '📸' },
@@ -67,7 +67,7 @@ export default function CommunityInfo() {
           {expandedSection === 'welfare' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
         {expandedSection === 'welfare' && (
-          <div className="bg-white border-2 border-blue-100 border-t-0 rounded-b-2xl p-5 space-y-4">
+          <div className="bg-white dark:bg-card border-2 border-blue-100 border-t-0 rounded-b-2xl p-5 space-y-4">
             {/* Main contact */}
             <div className="bg-blue-50 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-2">
@@ -122,7 +122,7 @@ export default function CommunityInfo() {
                   <a
                     key={prof.phone}
                     href={`tel:${prof.phone}`}
-                    className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 rounded-xl p-3 transition active:scale-95"
+                    className="flex items-center gap-3 bg-gray-50 dark:bg-muted/40 hover:bg-gray-100 rounded-xl p-3 transition active:scale-95"
                   >
                     <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
                       {prof.name.charAt(0)}

@@ -2,10 +2,16 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { supabase } from './supabase-client';
 import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './demo-data';
+import type { EmergencyCase } from './emergency';
 import { getUserName } from './utils';
 
 interface AnimalStore {
   animals: Animal[];
+  /** Injury and rescue reports. Persisted alongside animals in the same row. */
+  emergencies: EmergencyCase[];
+  addEmergency: (report: EmergencyCase) => void;
+  respondToEmergency: (id: string, responder: string) => void;
+  resolveEmergency: (id: string) => void;
   setAnimals: (animals: Animal[]) => void;
   addAnimal: (animal: Animal) => void;
   updateAnimal: (id: number, data: Partial<Animal>) => void;
@@ -55,6 +61,25 @@ export const useAnimalStore = create<AnimalStore>()(
   persist(
     (set) => ({
       animals: demoAnimals, // Initialize with demo data
+      // Starts empty on purpose. This list used to be seeded with two invented
+      // reports — "Dog with visible injury near sports complex" among them —
+      // which rendered on the homepage as though somebody had filed them.
+      emergencies: [],
+      addEmergency: (report) => set((state) => ({
+        emergencies: [report, ...(Array.isArray(state.emergencies) ? state.emergencies : [])],
+      })),
+      respondToEmergency: (id, responder) => set((state) => ({
+        emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) =>
+          c.id === id && !c.responders.includes(responder)
+            ? { ...c, responders: [...c.responders, responder] }
+            : c,
+        ),
+      })),
+      resolveEmergency: (id) => set((state) => ({
+        emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) =>
+          c.id === id ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c,
+        ),
+      })),
       setAnimals: (animals) => set({ animals: sanitizeAnimals(animals) }),
       addAnimal: (animal) => set((state) => ({ animals: sanitizeAnimals([animal, ...state.animals]) })),
       updateAnimal: (id, data) => set((state) => ({
@@ -166,6 +191,7 @@ export const useAnimalStore = create<AnimalStore>()(
           ...currentState,
           ...state,
           animals: sanitizeAnimals(state?.animals),
+          emergencies: Array.isArray(state?.emergencies) ? state.emergencies : [],
         };
       },
     }
@@ -185,7 +211,7 @@ if (typeof window !== 'undefined' && supabase) {
         table: 'pawbook_state',
         filter: "id=eq.'pawbook-animal-storage'",
       },
-      (payload) => {
+      (payload: { new?: { data?: { state?: Partial<AnimalStore> } } | null }) => {
         if (!isSyncing && payload.new && 'data' in payload.new) {
           isSyncing = true;
           try {

@@ -8,14 +8,16 @@ import { useImageStore } from '@/lib/image-store';
 import type { Animal, Comment, StudentMemory, MedicalRecord } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
+import { getFallbackAvatar } from '@/lib/animal-avatar';
+import { optimizeImageUrl } from '@/lib/image-url';
+import CareTracker from '@/components/care-tracker';
+import TrustBadge from '@/components/trust-badge';
+import DictateButton from '@/components/dictate-button';
+import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memory-prompts';
 
 const EMPTY_IMAGES: any[] = [];
 
-function getDefaultAvatar(animal: Animal) {
-  const seed = encodeURIComponent(animal.name);
-  const bg = animal.animal_type === 'cat' ? 'c0aede' : animal.animal_type === 'dog' ? 'ffdfbf' : 'b6e3f4';
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${bg}`;
-}
+
 
 interface AnimalProfileModalProps {
   animal: Animal;
@@ -32,6 +34,9 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const [liked, setLiked] = useState(false);
   const [showMemoryForm, setShowMemoryForm] = useState(false);
   const [memoryForm, setMemoryForm] = useState({ text: '', memory_type: 'happy' as StudentMemory['memory_type'] });
+  // The question someone picked to answer, used as the placeholder so the box
+  // stops being blank. Not saved — the memory should stand on its own.
+  const [memoryPrompt, setMemoryPrompt] = useState<string | null>(null);
   const [showMedicalForm, setShowMedicalForm] = useState(false);
   const [newMedicalRecord, setNewMedicalRecord] = useState<Partial<MedicalRecord>>({});
 
@@ -110,11 +115,6 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
     useAnimalStore.getState().likeMemory(animal.id, memoryId);
   };
 
-  const handleCareAction = (type: 'seen' | 'fed' | 'treated' | 'sheltered') => {
-    useAnimalStore.getState().logCareAction(animal.id, type);
-    alert(`Thank you for caring for ${animal.name}! 🐾`);
-  };
-
   const handleSaveMedicalRecord = () => {
     if (!newMedicalRecord.title || !newMedicalRecord.description) return;
     useAnimalStore.getState().addMedicalRecord(animal.id, {
@@ -130,7 +130,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
     setShowMedicalForm(false);
   };
 
-  const avatarSrc = profileImage || getDefaultAvatar(animal);
+  const avatarSrc = profileImage ? optimizeImageUrl(profileImage, { width: 600 }) : getFallbackAvatar(animal);
   const lastSeenBy = getDisplayActorName(animal.last_seen_by, animal.contributor);
   const lastFedBy = getDisplayActorName(animal.last_fed_by, animal.contributor);
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);
@@ -138,10 +138,11 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'gallery', label: 'Photos', icon: '📸' },
     { key: 'memories', label: 'Memories', icon: '💭' },
-    ...(isDeceased ? [] : [
+    // Without `as const` the spread widens key to string and stops matching TabKey.
+    ...(isDeceased ? [] : ([
       { key: 'medical', label: 'Medical', icon: '🏥' },
       { key: 'care', label: 'Timeline', icon: '📖' },
-    ])
+    ] as const))
   ];
 
   const memoryEmojis: Record<string, string> = {
@@ -155,7 +156,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto" onClick={onClose}>
       <div
-        className="relative bg-white rounded-3xl max-w-lg w-full mx-4 my-8 shadow-2xl overflow-hidden"
+        className="relative bg-white dark:bg-card rounded-3xl max-w-lg w-full mx-4 my-8 shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
@@ -199,7 +200,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* Tags */}
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {animal.personality_tags.map((tag, i) => (
-              <span key={i} className="bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">{tag}</span>
+              <span key={i} className="bg-white/80 dark:bg-card px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">{tag}</span>
             ))}
           </div>
 
@@ -222,7 +223,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* Last seen / fed */}
           {!isDeceased && (
             <div className="flex justify-center gap-4 mt-4">
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
                 <p className="text-sm">👀</p>
                 <p className="text-[10px] font-bold text-foreground">Last seen</p>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -230,7 +231,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                   <span className="block text-[9px]">by {lastSeenBy}</span>
                 </p>
               </div>
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
                 <p className="text-sm">🍲</p>
                 <p className="text-[10px] font-bold text-foreground">Last fed</p>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -238,10 +239,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                   <span className="block text-[9px]">by {lastFedBy}</span>
                 </p>
               </div>
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
-                <p className="text-sm">💛</p>
-                <p className="text-[10px] font-bold text-foreground">Trust</p>
-                <p className="text-xs text-muted-foreground">{animal.trust_score}%</p>
+              {/* A bare "50%" says nothing to a reader. TrustBadge turns the
+                  same number into a named level with an explanation. */}
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center flex items-center justify-center">
+                <TrustBadge score={animal.trust_score} />
               </div>
             </div>
           )}
@@ -276,7 +277,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         </div>
 
         {/* Description */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-border">
           <p className="text-sm text-foreground leading-relaxed">{animal.description}</p>
           {isDeceased && animal.death_note && (
             <div className="mt-3 bg-purple-50 border border-purple-200 rounded-xl p-3">
@@ -287,7 +288,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         </div>
 
         {/* Tab navigation */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 dark:border-border">
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -295,7 +296,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               className={`flex-1 py-3 text-center text-xs font-bold transition-all ${
                 activeTab === tab.key
                   ? 'text-primary border-b-2 border-primary bg-primary/5'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-gray-50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-gray-50 dark:bg-muted/40'
               }`}
             >
               <span className="text-sm block mb-0.5">{tab.icon}</span>
@@ -322,9 +323,9 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               {storedImages.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {storedImages.map(img => (
-                    <div key={img.id} className="rounded-xl overflow-hidden shadow-md border border-gray-100">
-                      <img src={img.url} alt={img.caption} className="w-full h-32 object-cover" />
-                      <div className="p-2 bg-white">
+                    <div key={img.id} className="rounded-xl overflow-hidden shadow-md border border-gray-100 dark:border-border">
+                      <img src={optimizeImageUrl(img.url, { width: 400 })} alt={img.caption} className="w-full h-32 object-cover" />
+                      <div className="p-2 bg-white dark:bg-card">
                         <p className="text-xs font-bold text-foreground truncate">{img.caption}</p>
                         <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>{formatTimeSince(new Date(img.uploadedAt))}</p>
                       </div>
@@ -346,7 +347,15 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {activeTab === 'memories' && (
             <div className="space-y-3">
               <button
-                onClick={() => setShowMemoryForm(!showMemoryForm)}
+                onClick={() => {
+                  // Open on the right set of questions: a memorial should not
+                  // lead with "what do they do when they see you coming?".
+                  if (!showMemoryForm) {
+                    setMemoryForm(f => ({ ...f, memory_type: defaultMemoryKind(isDeceased) }));
+                    setMemoryPrompt(null);
+                  }
+                  setShowMemoryForm(!showMemoryForm);
+                }}
                 className="w-full flex items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-3 rounded-xl active:scale-[0.98] transition border border-purple-200"
               >
                 <Plus size={18} />
@@ -357,7 +366,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
                   <select
                     value={memoryForm.memory_type}
-                    onChange={e => setMemoryForm(f => ({ ...f, memory_type: e.target.value as any }))}
+                    onChange={e => {
+                      setMemoryForm(f => ({ ...f, memory_type: e.target.value as any }));
+                      setMemoryPrompt(null);
+                    }}
                     className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:border-purple-400"
                   >
                     <option value="happy">😊 Happy Moment</option>
@@ -366,12 +378,48 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                     <option value="tribute">🌹 Tribute</option>
                     <option value="goodbye">👋 Last Goodbye</option>
                   </select>
+                  {/* A blank box asks someone to be a writer. A question asks
+                      them to be a witness, which is a much smaller thing. */}
+                  <div>
+                    <p className="text-xs font-bold text-purple-900 dark:text-foreground mb-1.5">
+                      Not sure where to start?
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {getMemoryPrompts(memoryForm.memory_type as MemoryKind, animal.id).map(prompt => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => setMemoryPrompt(prompt)}
+                          aria-pressed={memoryPrompt === prompt}
+                          className={`text-xs rounded-full px-3 py-1.5 border transition text-left ${
+                            memoryPrompt === prompt
+                              ? 'bg-purple-500 text-white border-purple-500'
+                              : 'bg-white dark:bg-card text-foreground border-purple-200 dark:border-border hover:border-purple-400'
+                          }`}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <textarea
                     value={memoryForm.text}
                     onChange={e => setMemoryForm(f => ({ ...f, text: e.target.value }))}
-                    placeholder="Share your experience, your memory of this animal..."
+                    placeholder={memoryPrompt ?? 'Share your experience, your memory of this animal...'}
+                    aria-label={memoryPrompt ?? 'Your memory'}
                     rows={4}
-                    className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 resize-none"
+                    className="w-full px-3 py-2 border border-purple-200 dark:border-border rounded-lg text-sm focus:outline-none focus:border-purple-400 resize-none bg-white dark:bg-card text-foreground"
+                  />
+                  {/* Typing a memory one-handed outdoors is the main thing between
+                      a student and a contribution. Dictation appends to whatever
+                      is already typed. */}
+                  <DictateButton
+                    onAppend={(text) =>
+                      setMemoryForm((f) => ({
+                        ...f,
+                        text: f.text ? `${f.text.trimEnd()} ${text}` : text,
+                      }))
+                    }
                   />
                   <div className="flex gap-2">
                     <button onClick={() => setShowMemoryForm(false)} className="flex-1 border border-purple-300 text-purple-700 font-bold py-2 rounded-lg hover:bg-purple-50 active:scale-95 transition text-sm">Cancel</button>
@@ -387,7 +435,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 </div>
               ) : (
                 animal.memories.map(memory => (
-                  <div key={memory.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                  <div key={memory.id} className="bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{memoryEmojis[memory.memory_type] || '💭'}</span>
                       <span className="font-bold text-sm text-foreground">{memory.author}</span>
@@ -463,7 +511,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 </div>
               ) : (
                 animal.medical_records.map(record => (
-                  <div key={record.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                  <div key={record.id} className="bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">{recordEmojis[record.record_type] || '📋'}</span>
                       <span className="font-bold text-sm text-foreground">{record.title}</span>
@@ -485,31 +533,16 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* CARE TIMELINE TAB */}
           {activeTab === 'care' && (
             <div className="space-y-3">
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">Care events are logged when students record feeding, sightings, and medical care.</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {(['seen', 'fed', 'treated', 'sheltered'] as const).map(type => {
-                  const emojis: Record<string, string> = { seen: '👀', fed: '🍲', treated: '💊', sheltered: '🏠' };
-                  const labels: Record<string, string> = { seen: 'I Saw Them', fed: 'I Fed Them', treated: 'Gave Care', sheltered: 'Gave Shelter' };
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => handleCareAction(type)}
-                      className="py-3 px-3 text-sm font-bold bg-white hover:bg-gray-50 active:scale-95 border border-gray-200 text-foreground rounded-xl transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-                    >
-                      <span className="text-xl">{emojis[type]}</span>
-                      <span className="text-xs">{labels[type]}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Care events are logged when students record feeding, sightings, and medical care.
+              </p>
+              <CareTracker animalId={animal.id} />
             </div>
           )}
         </div>
 
         {/* Comment Box — always visible at bottom */}
-        <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+        <div className="border-t border-gray-100 p-4 bg-gray-50/50 dark:bg-muted/40">
           <h4 className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Comments ({animal.comments.length})</h4>
           {animal.comments.length > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-2 mb-3 pr-1">
@@ -528,7 +561,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 px-3 py-2 rounded-full bg-white text-foreground text-sm border border-gray-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-card text-foreground text-sm border border-gray-200 dark:border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               onKeyDown={e => e.key === 'Enter' && handleComment()}
             />
             <button

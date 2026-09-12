@@ -9,3 +9,13 @@ node_modules
 .env*.local
 .DS_Store
 .vercel
+.env*
+
+# Database backups / dumps — never commit
+*.backup.gz
+*.storage.zip
+*.dump
+*.sql.gz
+
+# TypeScript incremental build cache — regenerated on every build
+tsconfig.tsbuildinfo

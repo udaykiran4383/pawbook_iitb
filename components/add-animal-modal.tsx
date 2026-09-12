@@ -6,6 +6,9 @@ import { detectDuplicates } from '@/lib/duplicate-detection';
 import { getUserName } from '@/lib/utils';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
 import type { Animal } from '@/lib/demo-data';
+import { optimizeImageUrl } from '@/lib/image-url';
+import type { Coords } from '@/lib/duplicate-detection';
+import LocationCapture from '@/components/location-capture';
 
 interface AddAnimalModalProps {
   animals: Animal[];
@@ -21,6 +24,8 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
     description: '',
     status: 'active' as 'active' | 'deceased',
   });
+  // Precise position, used only for duplicate matching and never published.
+  const [coords, setCoords] = useState<Coords | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,8 +34,14 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
 
   const duplicates = useMemo(() => {
     if (!formData.name || !formData.location) return [];
-    return detectDuplicates(animals as any, formData.name, formData.location, 0.65);
-  }, [formData.name, formData.location, animals]);
+    // Species is passed so a cat can no longer flag a dog with a similar name.
+    return detectDuplicates(animals as any, {
+      name: formData.name,
+      location: formData.location,
+      animal_type: formData.animalType,
+      location_coords: coords,
+    });
+  }, [formData.name, formData.location, formData.animalType, coords, animals]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +69,8 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
         id: Math.floor(Math.random() * 10000),
         name: formData.name,
         location: formData.location,
+        // The Animal type wants undefined rather than null when unknown.
+        location_coords: coords ?? undefined,
         animal_type: formData.animalType,
         description: formData.description,
         profile_image: profileImage,
@@ -100,9 +113,9 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {animals.map(a => (
               <div key={a.id} className="flex flex-col items-center flex-shrink-0 w-16">
-                <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-200 overflow-hidden flex items-center justify-center text-xl shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-white dark:bg-card border-2 border-blue-200 overflow-hidden flex items-center justify-center text-xl shadow-sm">
                   {a.profile_image ? (
-                    <img src={a.profile_image} alt={a.name} className="w-full h-full object-cover" />
+                    <img src={optimizeImageUrl(a.profile_image, { width: 96 })} alt={a.name} className="w-full h-full object-cover" />
                   ) : (
                     a.animal_type === 'cat' ? '🐱' : a.animal_type === 'dog' ? '🐕' : a.animal_type === 'leopard' ? '🐆' : a.animal_type === 'crocodile' ? '🐊' : '🐾'
                   )}
@@ -160,9 +173,16 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 <AlertTriangle className="text-amber-600 flex-shrink-0" size={20} />
                 <div>
                   <h3 className="font-semibold text-amber-900">👀 Similar friend found!</h3>
-                  <p className="text-sm text-amber-700 mt-1">
-                    {duplicates.map(d => `${d.name} at ${d.location}`).join(', ')} — {Math.round(duplicates[0].similarity * 100)}% match
-                  </p>
+                  {/* A bare percentage is not actionable. Say which animal and
+                      why it matched, so the reporter can judge for themselves. */}
+                  <ul className="text-sm text-amber-700 mt-1 space-y-0.5">
+                    {duplicates.slice(0, 3).map(d => (
+                      <li key={d.animalId}>
+                        <span className="font-bold">{d.name}</span> at {d.location}
+                        {d.reasons.length > 0 && <span className="text-xs"> — {d.reasons.join(', ')}</span>}
+                      </li>
+                    ))}
+                  </ul>
                   <p className="text-xs text-amber-700 mt-1">If this is the same animal, please update that profile instead of creating a new one.</p>
                 </div>
               </div>
@@ -179,7 +199,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 className={`flex-1 py-2.5 rounded-full font-bold text-sm transition border-2 active:scale-95 ${
                   formData.status === 'active'
                     ? 'bg-green-100 border-green-400 text-green-800'
-                    : 'bg-white border-gray-200 text-muted-foreground hover:border-green-300'
+                    : 'bg-white dark:bg-card border-gray-200 dark:border-border text-muted-foreground hover:border-green-300'
                 }`}
               >
                 🐾 Active & Around
@@ -190,7 +210,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 className={`flex-1 py-2.5 rounded-full font-bold text-sm transition border-2 active:scale-95 ${
                   formData.status === 'deceased'
                     ? 'bg-purple-100 border-purple-400 text-purple-800'
-                    : 'bg-white border-gray-200 text-muted-foreground hover:border-purple-300'
+                    : 'bg-white dark:bg-card border-gray-200 dark:border-border text-muted-foreground hover:border-purple-300'
                 }`}
               >
                 🌈 Rainbow Bridge
@@ -206,9 +226,12 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Brownie, Whiskers..."
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition"
               required
             />
+            <div className="mt-2">
+              <LocationCapture value={coords} onChange={setCoords} />
+            </div>
           </div>
 
           {/* Location */}
@@ -219,7 +242,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g., H21, Library, Main Gate..."
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition"
               required
             />
           </div>
@@ -230,7 +253,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
             <select
               value={formData.animalType}
               onChange={e => setFormData({ ...formData, animalType: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground transition"
               required
             >
               <option value="">Choose...</option>
@@ -253,7 +276,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Their personality, quirks, favourite spots, what makes them special..."
               rows={4}
-              className="w-full px-4 py-3 border-2 border-accent rounded-2xl focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition resize-none"
+              className="w-full px-4 py-3 border-2 border-accent rounded-2xl focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition resize-none"
             />
           </div>
 

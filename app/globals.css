@@ -11,19 +11,31 @@
   --card-foreground: #2C2416;
   --popover: #FFF9F5;
   --popover-foreground: #2C2416;
-  --primary: #FF6B9D;
+  /*
+   * Contrast-corrected, measured against --background #FFF9F5 (and #FFFFFF
+   * cards) with the WCAG 2 relative-luminance formula. The previous values put
+   * white on #FF6B9D at 2.68:1 and white on #FFB347 at 1.78:1, and the focus
+   * ring at 2.57:1 — meaning keyboard users could not see where they were.
+   * The hues are unchanged; only lightness moved, so the palette still reads
+   * warm. Bright --*-soft variants are kept for fills and decoration, where no
+   * text sits on them and no contrast minimum applies.
+   */
+  --primary: #D6246B;            /* white on it 4.86:1 · as text 4.65:1 */
   --primary-foreground: #FFFFFF;
-  --secondary: #FFB347;
+  --primary-soft: #FF6B9D;       /* decorative fills only — never behind text */
+  --secondary: #B45309;          /* white on it 5.02:1 · as text 4.81:1 */
   --secondary-foreground: #FFFFFF;
+  --secondary-soft: #FFB347;     /* decorative fills only */
   --muted: #F0E6DB;
-  --muted-foreground: #8B7B6F;
+  --muted-foreground: #6B5A4E;   /* 6.29:1 on bg, 6.57:1 on card (was 3.90:1) */
   --accent: #65DDB2;
-  --accent-foreground: #1A4D3C;
-  --destructive: #FF6B9D;
+  --accent-foreground: #1A4D3C;  /* 5.78:1 — already passed */
+  --accent-strong: #0F7A50;      /* 5.13:1 as text · white on it 5.36:1 */
+  --destructive: #B42318;        /* white on it 6.57:1 — and actually red now */
   --destructive-foreground: #FFFFFF;
-  --border: #E8D4C4;
-  --input: #FFFFFF;
-  --ring: #FF6B9D;
+  --border: #E8D4C4;             /* decorative hairline; not a control boundary */
+  --input: #9C8264;              /* 3.47:1 — form-field borders, per SC 1.4.11 */
+  --ring: #B02E5E;               /* 5.92:1 on bg, 6.18:1 on card (was 2.57:1) */
   --chart-1: #FF6B9D;
   --chart-2: #65DDB2;
   --chart-3: #FFB347;
@@ -119,6 +131,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  /*
+   * A visible, high-contrast focus indicator on every interactive element.
+   * Much of the UI is custom buttons and divs, and the ring token alone does
+   * not draw anything — without this, keyboard and switch users have no way to
+   * tell where they are on the page. --ring measures 5.92:1 on the page
+   * background and 6.18:1 on cards, comfortably over the 3:1 that SC 2.4.13
+   * asks for.
+   */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
   body {
     @apply bg-background text-foreground;
@@ -277,5 +303,46 @@
   /* Glow effect for highlighted elements */
   .glow-effect {
     box-shadow: 0 0 20px rgba(255, 107, 157, 0.3);
+  }
+}
+
+
+/* ---------------------------------------------------------------
+   Hand-drawn paw-and-heart wallpaper.
+   Moved here from styles/globals.css, which is never imported —
+   app/page.tsx has always used these classes but the rules were
+   not in the shipped bundle, so the wallpaper never rendered.
+   --------------------------------------------------------------- */
+
+.friendship-doodle-bg {
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 12% 14%, rgba(255, 220, 235, 0.6) 0, rgba(255, 220, 235, 0.6) 90px, transparent 92px),
+    radial-gradient(circle at 88% 10%, rgba(204, 241, 255, 0.58) 0, rgba(204, 241, 255, 0.58) 100px, transparent 102px),
+    radial-gradient(circle at 30% 90%, rgba(221, 255, 225, 0.52) 0, rgba(221, 255, 225, 0.52) 86px, transparent 88px),
+    radial-gradient(circle at 78% 76%, rgba(255, 239, 204, 0.56) 0, rgba(255, 239, 204, 0.56) 74px, transparent 76px),
+    url("data:image/svg+xml,%3Csvg width='420' height='320' viewBox='0 0 420 320' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23924f00' stroke-width='2.8' fill='none' stroke-linecap='round' stroke-linejoin='round' opacity='0.5'%3E%3Cpath d='M46 90c22-18 44-18 66 0'/%3E%3Ccircle cx='58' cy='106' r='3' fill='%23924f00'/%3E%3Ccircle cx='82' cy='106' r='3' fill='%23924f00'/%3E%3Cpath d='M62 122c6 9 16 9 22 0'/%3E%3Cpath d='M52 86l-8-14M92 86l8-14'/%3E%3Cpath d='M312 90c22-18 44-18 66 0'/%3E%3Ccircle cx='324' cy='106' r='3' fill='%23924f00'/%3E%3Ccircle cx='348' cy='106' r='3' fill='%23924f00'/%3E%3Cpath d='M328 122c6 9 16 9 22 0'/%3E%3Cpath d='M318 84c0-11 10-18 20-18 10 0 20 7 20 18'/%3E%3Cpath d='M124 188c26-20 52-20 78 0'/%3E%3Cpath d='M218 188c26-20 52-20 78 0'/%3E%3Cpath d='M196 170l12 8 12-8'/%3E%3Cpath d='M140 204l-8 14M280 204l8 14'/%3E%3Cpath d='M154 218c12 12 28 12 40 0'/%3E%3Cpath d='M226 218c12 12 28 12 40 0'/%3E%3Cpath d='M186 262c38-26 76-26 114 0'/%3E%3Cpath d='M86 262c30-22 60-22 90 0'/%3E%3Cpath d='M104 152c7-14 22-18 32-7 10-11 25-7 32 7-8 12-19 22-32 30-13-8-24-18-32-30z' fill='%23fb7185' opacity='0.28'/%3E%3Cpath d='M280 154c7-14 22-18 32-7 10-11 25-7 32 7-8 12-19 22-32 30-13-8-24-18-32-30z' fill='%23fb7185' opacity='0.28'/%3E%3C/g%3E%3Cg fill='%23924f00' opacity='0.34'%3E%3Cellipse cx='16' cy='200' rx='8' ry='10'/%3E%3Cellipse cx='4' cy='212' rx='8' ry='10'/%3E%3Cellipse cx='28' cy='212' rx='8' ry='10'/%3E%3Cellipse cx='16' cy='226' rx='12' ry='10'/%3E%3Cellipse cx='402' cy='220' rx='8' ry='10'/%3E%3Cellipse cx='390' cy='232' rx='8' ry='10'/%3E%3Cellipse cx='414' cy='232' rx='8' ry='10'/%3E%3Cellipse cx='402' cy='246' rx='12' ry='10'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: auto, auto, auto, auto, 420px 320px;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+}
+
+.friendship-doodle-overlay {
+  opacity: 0.35;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='520' height='280' viewBox='0 0 520 280' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23845300' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round' opacity='0.26'%3E%3Cpath d='M80 210c42-34 84-34 126 0'/%3E%3Cpath d='M260 210c42-34 84-34 126 0'/%3E%3Cpath d='M192 180c6-18 24-24 36-10 12-14 30-8 36 10-10 16-22 28-36 37-14-9-26-21-36-37z' fill='%23f43f5e' opacity='0.22'/%3E%3Cpath d='M44 96c24-20 48-20 72 0'/%3E%3Ccircle cx='56' cy='112' r='2.6' fill='%23845300'/%3E%3Ccircle cx='82' cy='112' r='2.6' fill='%23845300'/%3E%3Cpath d='M60 128c8 9 18 9 26 0'/%3E%3Cpath d='M406 98c24-20 48-20 72 0'/%3E%3Ccircle cx='418' cy='114' r='2.6' fill='%23845300'/%3E%3Ccircle cx='444' cy='114' r='2.6' fill='%23845300'/%3E%3Cpath d='M422 130c8 9 18 9 26 0'/%3E%3Cpath d='M120 248c12-8 24-8 36 0M332 248c12-8 24-8 36 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 520px 280px;
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+}
+
+@media (max-width: 768px) {
+  .friendship-doodle-bg {
+    opacity: 0.42;
+    background-size: auto, auto, auto, auto, 320px 240px;
+  }
+
+  .friendship-doodle-overlay {
+    opacity: 0.24;
+    background-size: 280px 180px;
   }
 }

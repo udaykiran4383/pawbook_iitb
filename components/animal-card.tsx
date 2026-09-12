@@ -7,13 +7,11 @@ import { getDisplayActorName, getUserName } from '@/lib/utils';
 import type { Animal, Comment } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
+import { getFallbackAvatar } from '@/lib/animal-avatar';
+import { animalPath } from '@/lib/animal-slug';
+import { optimizeImageUrl } from '@/lib/image-url';
 
-// Default avatar based on animal type
-function getDefaultAvatar(animal: Animal) {
-  const seed = encodeURIComponent(animal.name);
-  const bg = animal.animal_type === 'cat' ? 'c0aede' : animal.animal_type === 'dog' ? 'ffdfbf' : 'b6e3f4';
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${bg}`;
-}
+// Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
 
 const bgGradients = [
   'from-pink-100 to-purple-100',
@@ -33,6 +31,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState('');
   const [sharing, setSharing] = useState(false);
+  const [shareNote, setShareNote] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(animal.profile_image);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,15 +54,16 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const handleShare = async () => {
     setSharing(true);
     try {
+      // window.location.href meant sharing any animal shared the homepage.
+      const url = new URL(animalPath(animal), window.location.origin).toString();
+      const text = `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`;
+
       if (navigator.share) {
-        await navigator.share({
-          title: `${animal.name} - PawBook IITB`,
-          text: `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`,
-          url: window.location.href,
-        });
+        await navigator.share({ title: `${animal.name} - PawBook IITB`, text, url });
       } else {
-        await navigator.clipboard.writeText(`Meet ${animal.name} at ${animal.location}! 🐾`);
-        alert('Link copied! Share it with your friends 🐾');
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        setShareNote('Link copied! 🐾');
+        window.setTimeout(() => setShareNote(null), 2000);
       }
     } catch { }
     setSharing(false);
@@ -94,7 +94,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
     }
   }, [animal.id]);
 
-  const avatarSrc = profileImage || getDefaultAvatar(animal);
+  const avatarSrc = profileImage ? optimizeImageUrl(profileImage, { width: 200 }) : getFallbackAvatar(animal);
   const lastSeenBy = getDisplayActorName(animal.last_seen_by, animal.contributor);
   const lastFedBy = getDisplayActorName(animal.last_fed_by, animal.contributor);
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);
@@ -111,7 +111,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       {/* Profile image area */}
       <div className="mb-4 relative">
         <div className="relative w-32 h-32 mx-auto group">
-          <div className={`absolute inset-0 rounded-full blur-md opacity-30 ${isDeceased ? 'bg-purple-300' : 'bg-white'}`}></div>
+          <div className={`absolute inset-0 rounded-full blur-md opacity-30 ${isDeceased ? 'bg-purple-300' : 'bg-white dark:bg-card'}`}></div>
           <img
             src={avatarSrc}
             alt={animal.name}
@@ -149,7 +149,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       {/* Personality Tags */}
       <div className="flex flex-wrap justify-center gap-2 mb-3">
         {animal.personality_tags.map((tag, i) => (
-          <span key={i} className="inline-block bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">
+          <span key={i} className="inline-block bg-white/80 dark:bg-card px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">
             {tag}
           </span>
         ))}
@@ -174,14 +174,14 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       {/* Last Seen & Last Fed — for active animals */}
       {!isDeceased && (
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className={`bg-white/70 p-2.5 rounded-xl text-center border-2 ${isSeenUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
+          <div className={`bg-white/70 dark:bg-card p-2.5 rounded-xl text-center border-2 ${isSeenUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
             <p className="text-lg">👀</p>
             <p className="text-xs font-bold text-foreground">Last seen</p>
             <p className={`text-xs font-semibold ${isSeenUrgent ? 'text-red-600' : 'text-muted-foreground'}`} suppressHydrationWarning>
               {formatTimeSince(new Date(animal.last_seen))} by {lastSeenBy}
             </p>
           </div>
-          <div className={`bg-white/70 p-2.5 rounded-xl text-center border-2 ${isFedUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
+          <div className={`bg-white/70 dark:bg-card p-2.5 rounded-xl text-center border-2 ${isFedUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
             <p className="text-lg">🍲</p>
             <p className="text-xs font-bold text-foreground">Last fed</p>
             <p className={`text-xs font-semibold ${isFedUrgent ? 'text-red-600' : 'text-muted-foreground'}`} suppressHydrationWarning>
@@ -216,7 +216,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       )}
 
       {/* Social Actions */}
-      <div className="flex justify-center gap-6 mb-3 py-3 border-t-2 border-b-2 border-white/30">
+      <div className="flex justify-center gap-6 mb-3 py-3 border-t-2 border-b-2 border-white/30 dark:border-border">
         <button onClick={handleLike} className="flex flex-col items-center gap-1 transition-all active:scale-90">
           <Heart
             size={22}
@@ -232,7 +232,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
 
         <button onClick={handleShare} disabled={sharing} className="flex flex-col items-center gap-1 transition-all active:scale-90 text-muted-foreground hover:text-green-500 disabled:opacity-50">
           <Share2 size={22} />
-          <span className="text-xs font-bold text-foreground">Share</span>
+          <span className="text-xs font-bold text-foreground">{shareNote ?? 'Share'}</span>
         </button>
       </div>
 
@@ -242,7 +242,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
           {animal.comments.length > 0 && (
             <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
               {animal.comments.slice(0, 3).map(c => (
-                <div key={c.id} className="bg-white/60 rounded-lg p-2.5">
+                <div key={c.id} className="bg-white dark:bg-card/60 rounded-lg p-2.5">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-bold text-foreground">{c.author}</span>
                     <span className="text-[10px] text-muted-foreground" suppressHydrationWarning>{formatTimeSince(new Date(c.timestamp))}</span>
@@ -261,7 +261,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
               value={comment}
               onChange={e => setComment(e.target.value)}
               placeholder="Write a comment... 💬"
-              className="flex-1 px-3 py-2 rounded-full bg-white text-foreground text-sm border border-white/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-card text-foreground text-sm border border-white/30 dark:border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               onKeyDown={e => e.key === 'Enter' && handleComment()}
             />
             <button
@@ -278,7 +278,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       {/* View Full Profile Button */}
       <button
         onClick={() => onOpenProfile(animal)}
-        className="w-full flex items-center justify-center gap-2 bg-white/60 hover:bg-white/80 active:scale-[0.98] py-2.5 rounded-xl font-bold text-sm text-foreground transition-all"
+        className="w-full flex items-center justify-center gap-2 bg-white/60 hover:bg-white/80 dark:bg-card active:scale-[0.98] py-2.5 rounded-xl font-bold text-sm text-foreground transition-all"
       >
         <Eye size={16} />
         View Full Profile

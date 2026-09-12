@@ -19,6 +19,13 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 UPSTASH_REDIS_REST_URL=https://your-instance.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 
+# OpenAI (OPTIONAL) - screens anonymous image uploads.
+# Uses the `omni-moderation-latest` endpoint, which is FREE to call.
+# If unset, uploads still work but are NOT screened (a warning is logged).
+# Because there is no auth on /api/upload-image, setting this is strongly
+# recommended for any public deployment.
+OPENAI_API_KEY=your_openai_api_key
+
 # These should also be set:
 POSTGRES_URL=postgresql://postgres:password@host:5432/postgres
 POSTGRES_PRISMA_URL=postgresql://user:password@host:5432/postgres?pgbouncer=true

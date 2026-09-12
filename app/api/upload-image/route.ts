@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCloudinaryConfig, signCloudinaryParams } from '@/lib/cloudinary';
+import { moderateImage } from '@/lib/moderation';
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,20 @@ export async function POST(request: Request) {
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: 'Missing image file' }, { status: 400 });
+    }
+
+    // Screen anonymous uploads before anything is persisted. Fails open by
+    // design — see lib/moderation.ts for the tradeoff and why graphic-injury
+    // photos are deliberately not blocked.
+    const verdict = await moderateImage(image);
+    if (verdict.action === 'reject') {
+      return NextResponse.json(
+        {
+          error:
+            'This image was flagged by automated screening and was not uploaded. If you believe this is a mistake, please contact the PawBook team.',
+        },
+        { status: 422 }
+      );
     }
 
     const { cloudName, apiKey, apiSecret } = getCloudinaryConfig();
