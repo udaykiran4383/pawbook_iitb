@@ -66,7 +66,7 @@ function Fact({
   value: string;
 }) {
   return (
-    <div className="bg-white/80 border border-amber-100 rounded-2xl px-4 py-3">
+    <div className="bg-white/80 dark:bg-card border border-amber-100 rounded-2xl px-4 py-3">
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
         {icon}
         {label}
@@ -91,7 +91,7 @@ export default async function AnimalPage({ params }: PageProps) {
   const fedAt = animal.last_fed ? new Date(animal.last_fed) : null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50">
+    <main className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link
           href="/"
@@ -102,7 +102,7 @@ export default async function AnimalPage({ params }: PageProps) {
         </Link>
 
         <article
-          className={`bg-white/90 rounded-3xl border-2 p-6 shadow-sm ${
+          className={`bg-white/90 dark:bg-card rounded-3xl border-2 p-6 shadow-sm ${
             isDeceased ? 'border-purple-200' : 'border-amber-200'
           }`}
         >

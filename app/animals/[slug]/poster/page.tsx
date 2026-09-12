@@ -63,7 +63,9 @@ export default async function PosterPage({ params }: PageProps) {
         @media print {
           .no-print { display: none !important; }
           body { background: #fff !important; }
-          .poster { box-shadow: none !important; border-color: #2B1D14 !important; }
+          .poster { box-shadow: none !important; border-color: #2B1D14 !important;
+                    background: #fff !important; color: #2B1D14 !important; }
+          .poster * { color: #2B1D14 !important; }
         }
       `}</style>
 
@@ -83,6 +85,8 @@ export default async function PosterPage({ params }: PageProps) {
             </span>
           </div>
 
+          {/* Always light: this sheet is meant to come out of a printer, so it
+              must not follow the viewer's dark theme. */}
           <article className="poster bg-white border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
             <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-amber-700">
               PawBook · IIT Bombay

@@ -101,7 +101,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {animals.map(a => (
               <div key={a.id} className="flex flex-col items-center flex-shrink-0 w-16">
-                <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-200 overflow-hidden flex items-center justify-center text-xl shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-white dark:bg-card border-2 border-blue-200 overflow-hidden flex items-center justify-center text-xl shadow-sm">
                   {a.profile_image ? (
                     <img src={optimizeImageUrl(a.profile_image, { width: 96 })} alt={a.name} className="w-full h-full object-cover" />
                   ) : (
@@ -180,7 +180,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 className={`flex-1 py-2.5 rounded-full font-bold text-sm transition border-2 active:scale-95 ${
                   formData.status === 'active'
                     ? 'bg-green-100 border-green-400 text-green-800'
-                    : 'bg-white border-gray-200 text-muted-foreground hover:border-green-300'
+                    : 'bg-white dark:bg-card border-gray-200 dark:border-border text-muted-foreground hover:border-green-300'
                 }`}
               >
                 🐾 Active & Around
@@ -191,7 +191,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                 className={`flex-1 py-2.5 rounded-full font-bold text-sm transition border-2 active:scale-95 ${
                   formData.status === 'deceased'
                     ? 'bg-purple-100 border-purple-400 text-purple-800'
-                    : 'bg-white border-gray-200 text-muted-foreground hover:border-purple-300'
+                    : 'bg-white dark:bg-card border-gray-200 dark:border-border text-muted-foreground hover:border-purple-300'
                 }`}
               >
                 🌈 Rainbow Bridge
@@ -207,7 +207,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Brownie, Whiskers..."
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition"
               required
             />
           </div>
@@ -220,7 +220,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g., H21, Library, Main Gate..."
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition"
               required
             />
           </div>
@@ -231,7 +231,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
             <select
               value={formData.animalType}
               onChange={e => setFormData({ ...formData, animalType: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white text-foreground transition"
+              className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground transition"
               required
             >
               <option value="">Choose...</option>
@@ -254,7 +254,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Their personality, quirks, favourite spots, what makes them special..."
               rows={4}
-              className="w-full px-4 py-3 border-2 border-accent rounded-2xl focus:border-primary focus:outline-none bg-white text-foreground placeholder-muted-foreground transition resize-none"
+              className="w-full px-4 py-3 border-2 border-accent rounded-2xl focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition resize-none"
             />
           </div>
 

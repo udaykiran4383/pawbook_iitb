@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Nunito, Quicksand } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import ThemeToggle from '@/components/theme-toggle'
 
 const nunito = Nunito({ subsets: ["latin"] });
 const quicksand = Quicksand({ subsets: ["latin"] });
@@ -26,9 +28,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="scroll-smooth" style={{ fontFamily: nunito.style.fontFamily }}>
-      <body className="font-sans antialiased bg-gradient-to-br from-amber-50 via-white to-orange-50">
-        {children}
+    // suppressHydrationWarning: next-themes sets the class on <html> before
+    // React hydrates, which is the point — it prevents a flash of the wrong
+    // theme — but it means the server and client markup differ here by design.
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning style={{ fontFamily: nunito.style.fontFamily }}>
+      {/*
+        The background was hardcoded to a light amber gradient, which overrode
+        every dark token beneath it. That is why the .dark block in globals.css
+        could never show: the provider was not mounted, and even mounted it had
+        nothing to repaint.
+      */}
+      <body className="font-sans antialiased bg-background text-foreground">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeToggle />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

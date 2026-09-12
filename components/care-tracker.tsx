@@ -95,7 +95,7 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
               handleQuickAction(type);
             }}
             disabled={adding}
-            className="py-3 px-3 text-sm font-bold bg-white hover:bg-gray-50 active:scale-95 border border-gray-200 text-foreground rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+            className="py-3 px-3 text-sm font-bold bg-white hover:bg-gray-50 dark:bg-muted/40 active:scale-95 border border-gray-200 dark:border-border text-foreground rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
           >
             {adding ? (
               <Loader size={18} className="animate-spin" />
@@ -124,7 +124,7 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
         ) : (
           <div className="space-y-2 max-h-56 overflow-y-auto pr-2">
             {events.map(event => (
-              <div key={event.id} className="flex gap-3 text-sm bg-white/70 p-3 rounded-lg border border-white shadow-sm hover:shadow-md transition">
+              <div key={event.id} className="flex gap-3 text-sm bg-white/70 dark:bg-card p-3 rounded-lg border border-white shadow-sm hover:shadow-md transition">
                 <div className="flex-shrink-0 text-2xl">
                   {event.event_type === 'seen' && '👀'}
                   {event.event_type === 'fed' && '🍲'}

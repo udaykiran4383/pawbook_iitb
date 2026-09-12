@@ -64,13 +64,13 @@ export default function PlayfulFeatures() {
   return (
     <section className="max-w-6xl mx-auto px-4 pb-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-3xl border-2 border-amber-200/70 bg-white/80 p-4 md:p-5 shadow-sm">
+        <div className="rounded-3xl border-2 border-amber-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
           <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Daily Friendship Mission</p>
           <p className="text-base font-semibold text-foreground mt-2">{dailyTip?.tip || 'Loading today’s tip...'}</p>
           <p className="text-xs text-muted-foreground mt-2">Badge unlock: {dailyTip?.badge || 'Care Hero'}</p>
         </div>
 
-        <div className="rounded-3xl border-2 border-pink-200/70 bg-white/80 p-4 md:p-5 shadow-sm">
+        <div className="rounded-3xl border-2 border-pink-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Random Kindness Challenge</p>
             <button
@@ -88,7 +88,7 @@ export default function PlayfulFeatures() {
           </p>
         </div>
 
-        <div className="rounded-3xl border-2 border-blue-200/70 bg-white/80 p-4 md:p-5 shadow-sm">
+        <div className="rounded-3xl border-2 border-blue-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
           <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">PawBook Hall of Fame</p>
           <div className="space-y-2 mt-3">
             {topAnimals.map((animal, index) => (

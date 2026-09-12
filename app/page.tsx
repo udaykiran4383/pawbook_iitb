@@ -65,7 +65,7 @@ export default function Home() {
   // empty gradient. Only the animal data below waits.
   if (!isMounted) {
     return (
-      <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50">
+      <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
         <div className="friendship-doodle-bg fixed inset-0 pointer-events-none z-0" />
         <div className="friendship-doodle-overlay fixed inset-0 pointer-events-none z-0" />
         <div className="relative z-10 min-h-screen">
@@ -76,7 +76,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50">
+    <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
       <div className="friendship-doodle-bg fixed inset-0 pointer-events-none z-0" />
       <div className="friendship-doodle-overlay fixed inset-0 pointer-events-none z-0" />
 
@@ -113,7 +113,7 @@ export default function Home() {
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 id="search-animals"
-                className="w-full pl-12 pr-6 py-3.5 rounded-full bg-white text-foreground placeholder-muted-foreground border-2 border-accent focus:outline-none focus:border-primary transition shadow-sm"
+                className="w-full pl-12 pr-6 py-3.5 rounded-full bg-white dark:bg-card text-foreground placeholder-muted-foreground border-2 border-accent focus:outline-none focus:border-primary transition shadow-sm"
               />
             </div>
             <div className="flex gap-2 justify-center flex-wrap">
@@ -131,7 +131,7 @@ export default function Home() {
                   className={`px-4 py-1.5 rounded-full text-sm font-bold transition active:scale-95 ${
                     filterType === filter.key
                       ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'bg-white text-foreground border border-accent hover:border-primary'
+                      : 'bg-white dark:bg-card text-foreground border border-accent hover:border-primary'
                   }`}
                 >
                   {filter.label}
@@ -156,7 +156,7 @@ export default function Home() {
         {/* Main Animal Grid */}
         <section className="max-w-6xl mx-auto px-4 pb-8">
           {filteredAnimals.length === 0 ? (
-            <div className="scrapbook-card bg-white p-12 text-center max-w-md mx-auto">
+            <div className="scrapbook-card bg-white dark:bg-card p-12 text-center max-w-md mx-auto">
               <div className="text-6xl mb-4">🐕</div>
               <p className="text-2xl font-bold text-foreground mb-2">No animals found</p>
               <p className="text-muted-foreground mb-6">
@@ -213,7 +213,7 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer className="text-center py-8 text-muted-foreground border-t border-accent/30 bg-white/30">
+        <footer className="text-center py-8 text-muted-foreground border-t border-accent/30 bg-white dark:bg-card/30">
           <p className="text-sm italic mb-2">
             "If we're going to have animals around we all have to be concerned about them and take care of them."
           </p>

@@ -150,7 +150,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 overflow-y-auto" onClick={onClose}>
       <div
-        className="relative bg-white rounded-3xl max-w-lg w-full mx-4 my-8 shadow-2xl overflow-hidden"
+        className="relative bg-white dark:bg-card rounded-3xl max-w-lg w-full mx-4 my-8 shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
@@ -194,7 +194,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* Tags */}
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             {animal.personality_tags.map((tag, i) => (
-              <span key={i} className="bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">{tag}</span>
+              <span key={i} className="bg-white/80 dark:bg-card px-3 py-1 rounded-full text-xs font-bold text-foreground shadow-sm">{tag}</span>
             ))}
           </div>
 
@@ -217,7 +217,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* Last seen / fed */}
           {!isDeceased && (
             <div className="flex justify-center gap-4 mt-4">
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
                 <p className="text-sm">👀</p>
                 <p className="text-[10px] font-bold text-foreground">Last seen</p>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -225,7 +225,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                   <span className="block text-[9px]">by {lastSeenBy}</span>
                 </p>
               </div>
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
                 <p className="text-sm">🍲</p>
                 <p className="text-[10px] font-bold text-foreground">Last fed</p>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -233,7 +233,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                   <span className="block text-[9px]">by {lastFedBy}</span>
                 </p>
               </div>
-              <div className="bg-white/70 px-4 py-2 rounded-xl text-center">
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
                 <p className="text-sm">💛</p>
                 <p className="text-[10px] font-bold text-foreground">Trust</p>
                 <p className="text-xs text-muted-foreground">{animal.trust_score}%</p>
@@ -271,7 +271,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         </div>
 
         {/* Description */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-border">
           <p className="text-sm text-foreground leading-relaxed">{animal.description}</p>
           {isDeceased && animal.death_note && (
             <div className="mt-3 bg-purple-50 border border-purple-200 rounded-xl p-3">
@@ -282,7 +282,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         </div>
 
         {/* Tab navigation */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 dark:border-border">
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -290,7 +290,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               className={`flex-1 py-3 text-center text-xs font-bold transition-all ${
                 activeTab === tab.key
                   ? 'text-primary border-b-2 border-primary bg-primary/5'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-gray-50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-gray-50 dark:bg-muted/40'
               }`}
             >
               <span className="text-sm block mb-0.5">{tab.icon}</span>
@@ -317,9 +317,9 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               {storedImages.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {storedImages.map(img => (
-                    <div key={img.id} className="rounded-xl overflow-hidden shadow-md border border-gray-100">
+                    <div key={img.id} className="rounded-xl overflow-hidden shadow-md border border-gray-100 dark:border-border">
                       <img src={optimizeImageUrl(img.url, { width: 400 })} alt={img.caption} className="w-full h-32 object-cover" />
-                      <div className="p-2 bg-white">
+                      <div className="p-2 bg-white dark:bg-card">
                         <p className="text-xs font-bold text-foreground truncate">{img.caption}</p>
                         <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>{formatTimeSince(new Date(img.uploadedAt))}</p>
                       </div>
@@ -382,7 +382,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 </div>
               ) : (
                 animal.memories.map(memory => (
-                  <div key={memory.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                  <div key={memory.id} className="bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{memoryEmojis[memory.memory_type] || '💭'}</span>
                       <span className="font-bold text-sm text-foreground">{memory.author}</span>
@@ -458,7 +458,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 </div>
               ) : (
                 animal.medical_records.map(record => (
-                  <div key={record.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                  <div key={record.id} className="bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">{recordEmojis[record.record_type] || '📋'}</span>
                       <span className="font-bold text-sm text-foreground">{record.title}</span>
@@ -489,7 +489,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         </div>
 
         {/* Comment Box — always visible at bottom */}
-        <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+        <div className="border-t border-gray-100 p-4 bg-gray-50/50 dark:bg-muted/40">
           <h4 className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Comments ({animal.comments.length})</h4>
           {animal.comments.length > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-2 mb-3 pr-1">
@@ -508,7 +508,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 px-3 py-2 rounded-full bg-white text-foreground text-sm border border-gray-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="flex-1 px-3 py-2 rounded-full bg-white dark:bg-card text-foreground text-sm border border-gray-200 dark:border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               onKeyDown={e => e.key === 'Enter' && handleComment()}
             />
             <button

@@ -53,7 +53,7 @@ export default function NeedsYouMost({ animals, onOpenProfile }: NeedsYouMostPro
     <section className="px-4 mb-6">
       <button
         onClick={() => onOpenProfile(animal)}
-        className="max-w-2xl mx-auto w-full text-left bg-white/80 border-2 border-amber-200 rounded-3xl p-4 shadow-sm hover:shadow-md active:scale-[0.99] transition flex items-center gap-4 group"
+        className="max-w-2xl mx-auto w-full text-left bg-white/80 dark:bg-card border-2 border-amber-200 rounded-3xl p-4 shadow-sm hover:shadow-md active:scale-[0.99] transition flex items-center gap-4 group"
       >
         <img
           src={getAnimalAvatar(animal, 160)}
