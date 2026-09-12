@@ -11,19 +11,31 @@
   --card-foreground: #2C2416;
   --popover: #FFF9F5;
   --popover-foreground: #2C2416;
-  --primary: #FF6B9D;
+  /*
+   * Contrast-corrected, measured against --background #FFF9F5 (and #FFFFFF
+   * cards) with the WCAG 2 relative-luminance formula. The previous values put
+   * white on #FF6B9D at 2.68:1 and white on #FFB347 at 1.78:1, and the focus
+   * ring at 2.57:1 — meaning keyboard users could not see where they were.
+   * The hues are unchanged; only lightness moved, so the palette still reads
+   * warm. Bright --*-soft variants are kept for fills and decoration, where no
+   * text sits on them and no contrast minimum applies.
+   */
+  --primary: #D6246B;            /* white on it 4.86:1 · as text 4.65:1 */
   --primary-foreground: #FFFFFF;
-  --secondary: #FFB347;
+  --primary-soft: #FF6B9D;       /* decorative fills only — never behind text */
+  --secondary: #B45309;          /* white on it 5.02:1 · as text 4.81:1 */
   --secondary-foreground: #FFFFFF;
+  --secondary-soft: #FFB347;     /* decorative fills only */
   --muted: #F0E6DB;
-  --muted-foreground: #8B7B6F;
+  --muted-foreground: #6B5A4E;   /* 6.29:1 on bg, 6.57:1 on card (was 3.90:1) */
   --accent: #65DDB2;
-  --accent-foreground: #1A4D3C;
-  --destructive: #FF6B9D;
+  --accent-foreground: #1A4D3C;  /* 5.78:1 — already passed */
+  --accent-strong: #0F7A50;      /* 5.13:1 as text · white on it 5.36:1 */
+  --destructive: #B42318;        /* white on it 6.57:1 — and actually red now */
   --destructive-foreground: #FFFFFF;
-  --border: #E8D4C4;
-  --input: #FFFFFF;
-  --ring: #FF6B9D;
+  --border: #E8D4C4;             /* decorative hairline; not a control boundary */
+  --input: #9C8264;              /* 3.47:1 — form-field borders, per SC 1.4.11 */
+  --ring: #B02E5E;               /* 5.92:1 on bg, 6.18:1 on card (was 2.57:1) */
   --chart-1: #FF6B9D;
   --chart-2: #65DDB2;
   --chart-3: #FFB347;
@@ -119,6 +131,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  /*
+   * A visible, high-contrast focus indicator on every interactive element.
+   * Much of the UI is custom buttons and divs, and the ring token alone does
+   * not draw anything — without this, keyboard and switch users have no way to
+   * tell where they are on the page. --ring measures 5.92:1 on the page
+   * background and 6.18:1 on cards, comfortably over the 3:1 that SC 2.4.13
+   * asks for.
+   */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
   body {
     @apply bg-background text-foreground;
