@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, MapPin, Heart, Clock, Eye, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, MapPin, Heart, Clock, Eye, UtensilsCrossed, Printer } from 'lucide-react';
 import { animalIdFromSlug, animalPath } from '@/lib/animal-slug';
 import { getAnimalById } from '@/lib/state-server';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
@@ -218,9 +218,18 @@ export default async function AnimalPage({ params }: PageProps) {
           </footer>
         </article>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Open PawBook to add a photo, log a feed, or share a memory.
-        </p>
+        <div className="text-center mt-6 space-y-3">
+          <Link
+            href={`${animalPath(animal)}/poster`}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-200 rounded-full px-4 py-2 transition"
+          >
+            <Printer size={15} />
+            Printable card with QR
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            Open PawBook to add a photo, log a feed, or share a memory.
+          </p>
+        </div>
       </div>
     </main>
   );
