@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Heart, Plus, Calendar, X } from 'lucide-react';
 import { optimizeImageUrl } from '@/lib/image-url';
+import DictateButton from '@/components/dictate-button';
 
 interface EmotionalMemory {
   id: string;
@@ -139,14 +140,26 @@ export default function EmotionalMemoriesSection({
             <option value="other">💭 Other</option>
           </select>
 
-          <textarea
-            placeholder="Share your memory... (what happened, how it made you feel, what you'll remember most)"
-            value={formData.memory_text}
-            onChange={(e) => setFormData({ ...formData, memory_text: e.target.value })}
-            rows={4}
-            className="w-full px-3 py-2 border-2 border-purple-200 rounded-lg focus:border-purple-400 focus:outline-none text-sm resize-none"
-            required
-          />
+          <div className="space-y-2">
+            <textarea
+              placeholder="Share your memory... (what happened, how it made you feel, what you'll remember most)"
+              value={formData.memory_text}
+              onChange={(e) => setFormData({ ...formData, memory_text: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border-2 border-purple-200 rounded-lg focus:border-purple-400 focus:outline-none text-sm resize-none"
+              required
+            />
+            <DictateButton
+              onAppend={(text) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  memory_text: prev.memory_text
+                    ? `${prev.memory_text.replace(/\s+$/, '')} ${text.trim()}`
+                    : text.trim(),
+                }))
+              }
+            />
+          </div>
 
           <input
             type="date"
