@@ -8,6 +8,7 @@ import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { optimizeImageUrl } from '@/lib/image-url';
 import { formatTimeSince } from '@/lib/care-tracking';
 import type { Animal } from '@/lib/demo-data';
+import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
 
 // The underlying row changes as students log care, so don't serve a stale page
 // for long — but do let the CDN absorb a burst of QR scans.
@@ -17,10 +18,16 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function loadAnimal(slug: string): Promise<Animal | null> {
+/**
+ * Everything this page renders goes through toPublicAnimal, which is an
+ * allowlist — precise coordinates and contributor names cannot reach the
+ * markup even if someone adds them to the Animal type later.
+ */
+async function loadAnimal(slug: string): Promise<PublicAnimal | null> {
   const id = animalIdFromSlug(slug);
   if (id === null) return null;
-  return getAnimalById(id);
+  const animal = await getAnimalById(id);
+  return animal ? toPublicAnimal(animal) : null;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

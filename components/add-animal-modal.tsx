@@ -7,6 +7,8 @@ import { getUserName } from '@/lib/utils';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
 import type { Animal } from '@/lib/demo-data';
 import { optimizeImageUrl } from '@/lib/image-url';
+import type { Coords } from '@/lib/duplicate-detection';
+import LocationCapture from '@/components/location-capture';
 
 interface AddAnimalModalProps {
   animals: Animal[];
@@ -22,6 +24,8 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
     description: '',
     status: 'active' as 'active' | 'deceased',
   });
+  // Precise position, used only for duplicate matching and never published.
+  const [coords, setCoords] = useState<Coords | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,8 +39,9 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
       name: formData.name,
       location: formData.location,
       animal_type: formData.animalType,
+      location_coords: coords,
     });
-  }, [formData.name, formData.location, formData.animalType, animals]);
+  }, [formData.name, formData.location, formData.animalType, coords, animals]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,6 +69,8 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
         id: Math.floor(Math.random() * 10000),
         name: formData.name,
         location: formData.location,
+        // The Animal type wants undefined rather than null when unknown.
+        location_coords: coords ?? undefined,
         animal_type: formData.animalType,
         description: formData.description,
         profile_image: profileImage,
@@ -222,6 +229,9 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
               className="w-full px-4 py-3 border-2 border-accent rounded-full focus:border-primary focus:outline-none bg-white dark:bg-card text-foreground placeholder-muted-foreground transition"
               required
             />
+            <div className="mt-2">
+              <LocationCapture value={coords} onChange={setCoords} />
+            </div>
           </div>
 
           {/* Location */}

@@ -6,7 +6,7 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import { animalIdFromSlug, animalPath } from '@/lib/animal-slug';
 import { getAnimalById } from '@/lib/state-server';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
-import type { Animal } from '@/lib/demo-data';
+import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
 
 export const revalidate = 300;
 
@@ -26,10 +26,12 @@ function siteOrigin(): string {
   return 'https://pawbookiitb.vercel.app';
 }
 
-async function loadAnimal(slug: string): Promise<Animal | null> {
+// A poster goes on a public wall, so it gets the same allowlisted view.
+async function loadAnimal(slug: string): Promise<PublicAnimal | null> {
   const id = animalIdFromSlug(slug);
   if (id === null) return null;
-  return getAnimalById(id);
+  const animal = await getAnimalById(id);
+  return animal ? toPublicAnimal(animal) : null;
 }
 
 export default async function PosterPage({ params }: PageProps) {
