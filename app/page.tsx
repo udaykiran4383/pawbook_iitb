@@ -13,6 +13,7 @@ import { demoAnimals, getActiveAnimals, getDeceasedAnimals } from '@/lib/demo-da
 import type { Animal } from '@/lib/demo-data';
 
 import { useAnimalStore } from '@/lib/animal-store';
+import SiteHero from '@/components/site-hero';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -58,11 +59,17 @@ export default function Home() {
     setIsMounted(true);
   }, []);
 
+  // Until the persisted store hydrates we still render the masthead, so the
+  // first paint (and anything that never runs JS) shows PawBook rather than an
+  // empty gradient. Only the animal data below waits.
   if (!isMounted) {
     return (
       <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50">
         <div className="friendship-doodle-bg fixed inset-0 pointer-events-none z-0" />
         <div className="friendship-doodle-overlay fixed inset-0 pointer-events-none z-0" />
+        <div className="relative z-10 min-h-screen">
+          <SiteHero />
+        </div>
       </main>
     );
   }
@@ -73,44 +80,9 @@ export default function Home() {
       <div className="friendship-doodle-overlay fixed inset-0 pointer-events-none z-0" />
 
       <div className="relative z-10 min-h-screen">
-        {/* Hero Section */}
-        <section className="pt-8 md:pt-10 pb-6 px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            {/* Logo area */}
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-5xl">🐾</span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-                PawBook
-              </h1>
-            </div>
-            <p className="text-sm font-bold text-primary tracking-widest uppercase mb-3">IIT Bombay</p>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-2 handwritten">
-              Every campus animal has a story
-            </p>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              A digital memory book-
-              Share photos, memories, and care for them together. 📸🐕🐱
-            </p>
-
-            {/* Stats bar */}
-            <div className="flex justify-center gap-4 sm:gap-6 mt-5 flex-wrap">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{activeAnimals.length}</p>
-                <p className="text-xs text-muted-foreground">Active Friends</p>
-              </div>
-              <div className="w-px bg-border" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{totalLikes}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center"><Heart size={10} className="text-red-400" /> Total Loves</p>
-              </div>
-              <div className="w-px bg-border" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{totalMemories}</p>
-                <p className="text-xs text-muted-foreground">Memories Shared</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <SiteHero
+          stats={{ activeAnimals: activeAnimals.length, totalLikes, totalMemories }}
+        />
 
         {/* Notifications */}
         {urgentAnimals.length > 0 && (
