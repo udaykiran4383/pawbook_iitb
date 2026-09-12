@@ -10,6 +10,7 @@ import { useAnimalStore } from '@/lib/animal-store';
 import { uploadImageToCloudinary } from '@/lib/upload-image';
 import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { optimizeImageUrl } from '@/lib/image-url';
+import CareTracker from '@/components/care-tracker';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -108,11 +109,6 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
     useAnimalStore.getState().likeMemory(animal.id, memoryId);
   };
 
-  const handleCareAction = (type: 'seen' | 'fed' | 'treated' | 'sheltered') => {
-    useAnimalStore.getState().logCareAction(animal.id, type);
-    alert(`Thank you for caring for ${animal.name}! 🐾`);
-  };
-
   const handleSaveMedicalRecord = () => {
     if (!newMedicalRecord.title || !newMedicalRecord.description) return;
     useAnimalStore.getState().addMedicalRecord(animal.id, {
@@ -136,10 +132,11 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'gallery', label: 'Photos', icon: '📸' },
     { key: 'memories', label: 'Memories', icon: '💭' },
-    ...(isDeceased ? [] : [
+    // Without `as const` the spread widens key to string and stops matching TabKey.
+    ...(isDeceased ? [] : ([
       { key: 'medical', label: 'Medical', icon: '🏥' },
       { key: 'care', label: 'Timeline', icon: '📖' },
-    ])
+    ] as const))
   ];
 
   const memoryEmojis: Record<string, string> = {
@@ -483,25 +480,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           {/* CARE TIMELINE TAB */}
           {activeTab === 'care' && (
             <div className="space-y-3">
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">Care events are logged when students record feeding, sightings, and medical care.</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {(['seen', 'fed', 'treated', 'sheltered'] as const).map(type => {
-                  const emojis: Record<string, string> = { seen: '👀', fed: '🍲', treated: '💊', sheltered: '🏠' };
-                  const labels: Record<string, string> = { seen: 'I Saw Them', fed: 'I Fed Them', treated: 'Gave Care', sheltered: 'Gave Shelter' };
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => handleCareAction(type)}
-                      className="py-3 px-3 text-sm font-bold bg-white hover:bg-gray-50 active:scale-95 border border-gray-200 text-foreground rounded-xl transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-                    >
-                      <span className="text-xl">{emojis[type]}</span>
-                      <span className="text-xs">{labels[type]}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Care events are logged when students record feeding, sightings, and medical care.
+              </p>
+              <CareTracker animalId={animal.id} />
             </div>
           )}
         </div>

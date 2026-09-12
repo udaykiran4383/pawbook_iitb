@@ -185,7 +185,7 @@ if (typeof window !== 'undefined' && supabase) {
         table: 'pawbook_state',
         filter: "id=eq.'pawbook-animal-storage'",
       },
-      (payload) => {
+      (payload: { new?: { data?: { state?: Partial<AnimalStore> } } | null }) => {
         if (!isSyncing && payload.new && 'data' in payload.new) {
           isSyncing = true;
           try {

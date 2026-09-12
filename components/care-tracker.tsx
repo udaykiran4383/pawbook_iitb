@@ -19,6 +19,7 @@ interface CareEvent {
 
 export default function CareTracker({ animalId }: CareTrackerProps) {
   const [adding, setAdding] = useState(false);
+  const [thanks, setThanks] = useState<string | null>(null);
 
   // Read the animal straight from the store so the timeline reflects what was
   // actually persisted, rather than the demo fixtures this used to show.
@@ -67,20 +68,24 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
       // every other student's view. It used to be a setState plus a 400ms
       // setTimeout, which meant last_fed never actually changed.
       useAnimalStore.getState().logCareAction(animalId, eventType as 'seen' | 'fed' | 'treated' | 'sheltered');
+      // A blocking alert() interrupts the person mid-flow and, on mobile, hides
+      // the very timeline they just added to.
+      setThanks(`Thank you for caring for ${animal?.name ?? 'them'}! 🐾`);
+      window.setTimeout(() => setThanks(null), 2500);
     } finally {
       setAdding(false);
     }
   };
 
-  const actionEmojis = {
-    seen: '👀',
-    fed: '🍲',
-    treated: '💊',
-    sheltered: '🏠'
+  const actionEmojis: Record<string, string> = {
+    seen: '👀', fed: '🍲', treated: '💊', sheltered: '🏠',
+  };
+  const actionLabels: Record<string, string> = {
+    seen: 'I Saw Them', fed: 'I Fed Them', treated: 'Gave Care', sheltered: 'Gave Shelter',
   };
 
   return (
-    <div className="space-y-4 border-t-2 border-white/30 pt-4 mt-4">
+    <div className="space-y-4">
       {/* Quick Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
         {(['seen', 'fed', 'treated', 'sheltered'] as const).map(type => (
@@ -90,19 +95,23 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
               handleQuickAction(type);
             }}
             disabled={adding}
-            className="py-3 px-3 text-sm font-bold bg-white/90 hover:bg-white active:scale-95 border-2 border-white text-foreground rounded-full transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+            className="py-3 px-3 text-sm font-bold bg-white hover:bg-gray-50 active:scale-95 border border-gray-200 text-foreground rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
           >
             {adding ? (
               <Loader size={18} className="animate-spin" />
             ) : (
               <span className="text-xl">{actionEmojis[type]}</span>
             )}
-            <span className="font-bold text-xs sm:text-sm">
-              {type === 'seen' ? 'Seen' : type === 'fed' ? 'Fed' : type === 'treated' ? 'Care' : 'Shelter'}
-            </span>
+            <span className="font-bold text-xs">{actionLabels[type]}</span>
           </button>
         ))}
       </div>
+
+      {thanks && (
+        <p role="status" className="text-center text-sm font-bold text-green-700 bg-green-50 border border-green-200 rounded-xl py-2 px-3">
+          {thanks}
+        </p>
+      )}
 
       {/* Events Timeline */}
       <div className="mt-4">
