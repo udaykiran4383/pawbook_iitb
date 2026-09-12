@@ -12,6 +12,7 @@ import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { optimizeImageUrl } from '@/lib/image-url';
 import CareTracker from '@/components/care-tracker';
 import TrustBadge from '@/components/trust-badge';
+import DictateButton from '@/components/dictate-button';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -367,7 +368,18 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                     onChange={e => setMemoryForm(f => ({ ...f, text: e.target.value }))}
                     placeholder="Share your experience, your memory of this animal..."
                     rows={4}
-                    className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 resize-none"
+                    className="w-full px-3 py-2 border border-purple-200 dark:border-border rounded-lg text-sm focus:outline-none focus:border-purple-400 resize-none bg-white dark:bg-card text-foreground"
+                  />
+                  {/* Typing a memory one-handed outdoors is the main thing between
+                      a student and a contribution. Dictation appends to whatever
+                      is already typed. */}
+                  <DictateButton
+                    onAppend={(text) =>
+                      setMemoryForm((f) => ({
+                        ...f,
+                        text: f.text ? `${f.text.trimEnd()} ${text}` : text,
+                      }))
+                    }
                   />
                   <div className="flex gap-2">
                     <button onClick={() => setShowMemoryForm(false)} className="flex-1 border border-purple-300 text-purple-700 font-bold py-2 rounded-lg hover:bg-purple-50 active:scale-95 transition text-sm">Cancel</button>
