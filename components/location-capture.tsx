@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { MapPin, Loader, Check, X } from 'lucide-react';
-import type { Coords } from '@/lib/duplicate-detection';
+import { quantizeCoords, type Coords } from '@/lib/duplicate-detection';
 
 interface LocationCaptureProps {
   value: Coords | null;
@@ -24,12 +24,14 @@ function onCampus(coords: Coords): boolean {
 }
 
 /**
- * Optional precise-location capture for a new animal.
+ * Optional, deliberately coarse location capture for a new animal.
  *
- * The coordinates are used to catch duplicate entries — two students adding the
- * same dog under different names, which is the usual way a duplicate happens —
- * and they are never published. The public page for an animal shows only the
- * area name someone typed ("H11", "EE Department"), never a point on a map.
+ * The reading is rounded to a ~100 m grid before it is held in state or sent
+ * anywhere, so a precise position is never stored at all. It exists to catch
+ * duplicate entries — two students adding the same dog under different names,
+ * which is the usual way a duplicate happens — and that question only needs
+ * home-range resolution. The public page shows only the area name someone typed
+ * ("H11", "EE Department"), never a point on a map.
  *
  * That split is deliberate. A precise, public, per-animal location log is a
  * targeting list for anyone who wants to harm these animals, and Indian courts
@@ -39,7 +41,6 @@ function onCampus(coords: Coords): boolean {
  */
 export default function LocationCapture({ value, onChange }: LocationCaptureProps) {
   const [status, setStatus] = useState<Status>(value ? 'captured' : 'idle');
-  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   const capture = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -50,12 +51,12 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
     setStatus('locating');
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const coords = {
+        // Coarsened immediately, before it is held in state or sent anywhere.
+        // The precise reading is never stored, so it cannot leak later.
+        const coords = quantizeCoords({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        };
-        setAccuracy(position.coords.accuracy ?? null);
-
+        });
         // A fix from across the city is worse than none: it would make a distant
         // animal look like a duplicate of whatever is nearest to the bad point.
         if (!onCampus(coords)) {
@@ -77,7 +78,6 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
 
   const clear = () => {
     onChange(null);
-    setAccuracy(null);
     setStatus('idle');
   };
 
@@ -89,8 +89,8 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-foreground">Location noted</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {accuracy ? `Accurate to about ${Math.round(accuracy)} m. ` : ''}
-              Kept private — only the area name you typed is shown publicly.
+              Saved as a rough 100 m area, never an exact spot, and not shown anywhere
+              on the site.
             </p>
           </div>
           <button
@@ -117,7 +117,8 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
 
           <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
             Helps us spot if this animal is already on PawBook under another name.
-            Your exact position is never shown on the site.
+            Rounded to a rough 100 m area before it is saved — your exact position
+            never leaves your phone.
           </p>
 
           {status === 'denied' && (

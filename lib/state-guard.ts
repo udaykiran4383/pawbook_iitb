@@ -13,6 +13,8 @@
  * per-entity rows with RLS.
  */
 
+import { quantizeCoords } from './duplicate-detection';
+
 const MAX_BODY_BYTES = 2_000_000; // ~2 MB; the real blob is ~70 KB
 const MAX_ANIMALS = 2_000;
 const MAX_LIST_ITEMS = 5_000; // per list, per animal
@@ -99,6 +101,34 @@ export function checkStatePayload(data: unknown): GuardResult {
   }
 
   return { ok: true };
+}
+
+/**
+ * Coarsen every position in an incoming write.
+ *
+ * The UI already rounds before sending, but the endpoint is public and takes
+ * whatever it is given — so a precise coordinate could be posted straight past
+ * the form. Enforcing it here means the stored row cannot contain a precise
+ * position regardless of what the client does, which is the only version of
+ * this guarantee that actually holds.
+ */
+export function coarsenStatePositions(data: unknown): unknown {
+  const animals = (data as any)?.state?.animals;
+  if (!Array.isArray(animals)) return data;
+
+  return {
+    ...(data as any),
+    state: {
+      ...(data as any).state,
+      animals: animals.map((animal: any) => {
+        const coords = animal?.location_coords;
+        if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+          return animal;
+        }
+        return { ...animal, location_coords: quantizeCoords(coords) };
+      }),
+    },
+  };
 }
 
 /** Best-effort client identity for rate limiting behind Vercel's proxy. */

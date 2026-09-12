@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin, SupabaseAdminUnavailableError } from '@/lib/supabase-admin';
 import { redisDel, redisGetJSON, redisRateLimited, redisSetJSON } from '@/lib/redis-cache';
 import { mergeState } from '@/lib/state-merge';
-import { checkStateId, checkStatePayload, clientIp } from '@/lib/state-guard';
+import { checkStateId, checkStatePayload, clientIp, coarsenStatePositions } from '@/lib/state-guard';
 
 const CACHE_TTL_SECONDS = 90;
 const cacheKey = (id: string) => `pawbook:state:${id}`;
@@ -76,7 +76,10 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: readError.message }, { status: 500 });
     }
 
-    const merged = existing?.data ? mergeState(existing.data, data) : data;
+    // Coordinates are coarsened here, not just in the form, so a direct POST
+    // cannot store a precise position.
+    const incoming = coarsenStatePositions(data);
+    const merged = existing?.data ? mergeState(existing.data, incoming) : incoming;
 
     const { error } = await supabaseAdmin
       .from('pawbook_state')

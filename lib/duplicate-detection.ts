@@ -71,6 +71,35 @@ export function distanceMetres(a: Coords, b: Coords): number {
 /** Median home range of an urban free-ranging dog, as a radius. */
 export const HOME_RANGE_METRES = 110;
 
+/**
+ * Decimal places kept when storing a position: three, which is about a 111 m
+ * grid north-south and 105 m east-west at this latitude.
+ *
+ * Duplicate matching only ever asks "are these two within a home range of each
+ * other", so it needs no more precision than this — and storing no more than
+ * this means the stored value is a neighbourhood rather than a point. That
+ * matters because the row these coordinates live in is served by an
+ * unauthenticated endpoint: anything the browser can read, anyone can read. The
+ * defence has to be that the data itself is coarse, not that the page hides it.
+ */
+const STORED_DECIMALS = 3;
+
+/**
+ * Snap a reading to the storage grid.
+ *
+ * Quantising rather than jittering keeps the operation deterministic: the same
+ * spot always lands in the same cell, so two reports from one doorway match
+ * exactly, and repeated readings cannot be averaged back into a precise fix the
+ * way random offsets can.
+ */
+export function quantizeCoords(coords: Coords): Coords {
+  const factor = 10 ** STORED_DECIMALS;
+  return {
+    lat: Math.round(coords.lat * factor) / factor,
+    lng: Math.round(coords.lng * factor) / factor,
+  };
+}
+
 export interface DuplicateMatch {
   animalId: number;
   name: string;
@@ -140,7 +169,9 @@ export function detectDuplicates(
           // Full weight when on top of each other, tapering to zero at the edge
           // of a typical home range.
           proximityScore = 1 - metres / HOME_RANGE_METRES;
-          reasons.push(`about ${Math.round(metres)} m away`);
+          // Positions are stored on a ~100 m grid, so "about 0 m away" would be
+          // false precision — inside one cell all we know is "same area".
+          reasons.push(metres < 60 ? 'same area' : `about ${Math.round(metres)} m away`);
         }
       }
 
