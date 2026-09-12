@@ -25,14 +25,35 @@ export default function PlayfulFeatures() {
   const [dailyTip, setDailyTip] = useState<TipPayload | null>(null);
 
   useEffect(() => {
-    const localTips = [
+    // Used only when the request fails, so the card is never empty offline.
+    const fallbackTips = [
       { tip: 'Offer clean water near common resting spots.', badge: 'Care Hero' },
       { tip: 'Share one happy memory in PawBook today.', badge: 'Paw Pal' },
       { tip: 'Check existing profiles before adding new animals.', badge: 'Friend of Strays' },
       { tip: 'Carry a small packet of pet-safe biscuits on campus.', badge: 'Campus Kindness Star' },
     ];
-    const pick = localTips[Math.floor(Math.random() * localTips.length)];
-    setDailyTip({ ...pick, date: new Date().toISOString() });
+    const useFallback = () => {
+      const pick = fallbackTips[Math.floor(Math.random() * fallbackTips.length)];
+      setDailyTip({ ...pick, date: new Date().toISOString() });
+    };
+
+    let cancelled = false;
+    // /api/playful-tip has always existed and carries more tips than the list
+    // above; this component just never called it.
+    fetch('/api/playful-tip')
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('bad status'))))
+      .then((payload: TipPayload) => {
+        if (cancelled) return;
+        if (payload?.tip) setDailyTip(payload);
+        else useFallback();
+      })
+      .catch(() => {
+        if (!cancelled) useFallback();
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const topAnimals = useMemo(

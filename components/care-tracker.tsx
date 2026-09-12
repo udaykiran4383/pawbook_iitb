@@ -1,54 +1,72 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Loader } from 'lucide-react';
-import { formatTimeSince, getCareColor, eventDescriptions, CareEventType } from '@/lib/care-tracking';
-import { getDemoCareEvents } from '@/lib/demo-data';
+import { useState, useMemo } from 'react';
+import { Loader } from 'lucide-react';
+import { formatTimeSince, eventDescriptions, CareEventType } from '@/lib/care-tracking';
+import { getDisplayActorName } from '@/lib/utils';
+import { useAnimalStore } from '@/lib/animal-store';
 
 interface CareTrackerProps {
   animalId: number;
 }
 
 interface CareEvent {
-  id: number;
+  id: string;
   event_type: CareEventType;
   notes: string;
   created_at: string;
 }
 
 export default function CareTracker({ animalId }: CareTrackerProps) {
-  const [events, setEvents] = useState<CareEvent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [selectedType, setSelectedType] = useState<CareEventType>('seen');
 
-  // Load demo care events
-  useEffect(() => {
-    const demoEvents = getDemoCareEvents(animalId);
-    setEvents(demoEvents as any);
-    setLoading(false);
-  }, [animalId]);
+  // Read the animal straight from the store so the timeline reflects what was
+  // actually persisted, rather than the demo fixtures this used to show.
+  const animal = useAnimalStore((state) => state.animals.find((a) => a.id === animalId));
+
+  /**
+   * The timeline is derived from the animal's own care fields. Those are what
+   * survive a reload and what every other student sees, so showing anything
+   * else here would be showing a number that isn't real.
+   */
+  const events = useMemo<CareEvent[]>(() => {
+    if (!animal) return [];
+
+    const entries: CareEvent[] = [];
+    const push = (type: CareEventType, at?: string | null, by?: string | null) => {
+      if (!at) return;
+      const when = new Date(at);
+      if (Number.isNaN(when.getTime())) return;
+      const actor = getDisplayActorName(by ?? undefined, animal.contributor);
+      entries.push({
+        id: `${type}-${at}`,
+        event_type: type,
+        notes: actor ? `by ${actor}` : '',
+        created_at: at,
+      });
+    };
+
+    push('seen', animal.last_seen, animal.last_seen_by);
+    push('fed', animal.last_fed, animal.last_fed_by);
+    push(
+      (animal.last_cared_type as CareEventType) || 'treated',
+      animal.last_cared_at,
+      animal.last_cared_by,
+    );
+
+    return entries.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }, [animal]);
 
   const handleQuickAction = async (eventType: CareEventType) => {
+    if (adding) return;
     setAdding(true);
     try {
-      console.log('[v0] Recording care action:', eventType);
-      
-      // Create new event
-      const newEvent: CareEvent = {
-        id: Math.floor(Math.random() * 1000000),
-        event_type: eventType,
-        notes: '',
-        created_at: new Date().toISOString(),
-      };
-
-      // Add to events immediately
-      setEvents(prevEvents => [newEvent, ...prevEvents]);
-      
-      // Simulate async operation
-      await new Promise(resolve => setTimeout(resolve, 400));
-    } catch (error) {
-      console.error('[v0] Action error:', error);
+      // This writes through the persisted store, so it reaches the database and
+      // every other student's view. It used to be a setState plus a 400ms
+      // setTimeout, which meant last_fed never actually changed.
+      useAnimalStore.getState().logCareAction(animalId, eventType as 'seen' | 'fed' | 'treated' | 'sheltered');
     } finally {
       setAdding(false);
     }
@@ -70,7 +88,6 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
             key={type}
             onClick={() => {
               handleQuickAction(type);
-              console.log('[v0] Care action recorded:', type);
             }}
             disabled={adding}
             className="py-3 px-3 text-sm font-bold bg-white/90 hover:bg-white active:scale-95 border-2 border-white text-foreground rounded-full transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
@@ -90,9 +107,7 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
       {/* Events Timeline */}
       <div className="mt-4">
         <h4 className="font-bold text-lg text-foreground mb-3">Care Timeline 📖</h4>
-        {loading ? (
-          <div className="text-center text-foreground text-sm py-4 animate-pulse">Loading moments...</div>
-        ) : events.length === 0 ? (
+        {events.length === 0 ? (
           <div className="text-center text-foreground text-sm py-4">
             <p className="text-lg mb-2">No moments yet! 💭</p>
             <p className="text-xs">Click a button above to record the first care moment</p>

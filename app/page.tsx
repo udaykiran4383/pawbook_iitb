@@ -14,6 +14,7 @@ import type { Animal } from '@/lib/demo-data';
 
 import { useAnimalStore } from '@/lib/animal-store';
 import SiteHero from '@/components/site-hero';
+import NeedsYouMost from '@/components/needs-you-most';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -83,6 +84,8 @@ export default function Home() {
         <SiteHero
           stats={{ activeAnimals: activeAnimals.length, totalLikes, totalMemories }}
         />
+
+        <NeedsYouMost animals={activeAnimals} onOpenProfile={setSelectedAnimal} />
 
         {/* Notifications */}
         {urgentAnimals.length > 0 && (
