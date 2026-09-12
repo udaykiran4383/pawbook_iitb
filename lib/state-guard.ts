@@ -83,6 +83,21 @@ export function checkStatePayload(data: unknown): GuardResult {
     }
   }
 
+  const emergencies = (data as any)?.state?.emergencies;
+  if (emergencies !== undefined) {
+    if (!Array.isArray(emergencies)) return fail(400, 'state.emergencies must be an array');
+    if (emergencies.length > MAX_LIST_ITEMS) return fail(413, 'Too many emergency reports');
+    for (const report of emergencies) {
+      if (!report || typeof report !== 'object' || Array.isArray(report)) {
+        return fail(400, 'Each emergency report must be an object');
+      }
+      if (!report.id) return fail(400, 'Each emergency report needs an id');
+      if (report.responders !== undefined && !Array.isArray(report.responders)) {
+        return fail(400, 'responders must be an array');
+      }
+    }
+  }
+
   return { ok: true };
 }
 

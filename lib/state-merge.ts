@@ -72,6 +72,29 @@ function unionById<T>(current: unknown, incoming: unknown, onCollide?: (a: T, b:
   return order.map((key) => byKey.get(key) as T);
 }
 
+/**
+ * Emergency reports converge the same way animals do: a report present on one
+ * side only is kept, resolution is monotonic (once someone marks it handled it
+ * stays handled), and responders are unioned so two people volunteering at the
+ * same moment do not erase each other.
+ */
+function mergeEmergency(a: Json, b: Json): Json {
+  const responders = Array.from(
+    new Set([
+      ...(Array.isArray(a?.responders) ? a.responders : []),
+      ...(Array.isArray(b?.responders) ? b.responders : []),
+    ]),
+  );
+  const resolved = Boolean(a?.resolved) || Boolean(b?.resolved);
+  return {
+    ...a,
+    ...b,
+    responders,
+    resolved,
+    resolved_at: newerTimestamp(a?.resolved_at, b?.resolved_at) ?? undefined,
+  };
+}
+
 /** Memories carry their own like counts, which also only ever increase. */
 function mergeMemory(a: Json, b: Json): Json {
   return { ...a, ...b, likes: Math.max(Number(a?.likes) || 0, Number(b?.likes) || 0) };
@@ -134,9 +157,20 @@ export function mergeState(current: unknown, incoming: unknown): unknown {
 
   const animals = unionById<Json>(curAnimals, incAnimals, mergeAnimal);
 
-  return {
-    ...cur,
-    ...inc,
-    state: { ...cur.state, ...inc.state, animals },
-  };
+  const mergedState: Json = { ...cur.state, ...inc.state, animals };
+
+  // Only introduce the key when a side actually carries it, so merging two
+  // identical pre-feature blobs still returns something identical rather than
+  // rewriting every stored row with an empty array.
+  const hasEmergencies =
+    cur?.state?.emergencies !== undefined || inc?.state?.emergencies !== undefined;
+  if (hasEmergencies) {
+    mergedState.emergencies = unionById<Json>(
+      cur?.state?.emergencies,
+      inc?.state?.emergencies,
+      mergeEmergency,
+    );
+  }
+
+  return { ...cur, ...inc, state: mergedState };
 }
