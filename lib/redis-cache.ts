@@ -43,3 +43,23 @@ export async function redisSetJSON<T>(key: string, value: T, ttlSeconds = 60): P
 export async function redisDel(key: string): Promise<void> {
   await callRedis('del', [key]);
 }
+
+/**
+ * Fixed-window rate limit. Returns true when the caller is over budget.
+ *
+ * Fails open: if Redis is not configured or is unreachable, writes are allowed
+ * through rather than taking the app down. That is the right trade here — this
+ * limits abuse, it is not an authorization check.
+ */
+export async function redisRateLimited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  if (!isRedisConfigured()) return false;
+
+  try {
+    const count = await callRedis<number>('incr', [key]);
+    if (count === null) return false;
+    if (count === 1) await callRedis('expire', [key, windowSeconds]);
+    return count > limit;
+  } catch {
+    return false;
+  }
+}
