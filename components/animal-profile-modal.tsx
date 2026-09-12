@@ -11,6 +11,7 @@ import { uploadImageToCloudinary } from '@/lib/upload-image';
 import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { optimizeImageUrl } from '@/lib/image-url';
 import CareTracker from '@/components/care-tracker';
+import TrustBadge from '@/components/trust-badge';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -233,10 +234,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                   <span className="block text-[9px]">by {lastFedBy}</span>
                 </p>
               </div>
-              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center">
-                <p className="text-sm">💛</p>
-                <p className="text-[10px] font-bold text-foreground">Trust</p>
-                <p className="text-xs text-muted-foreground">{animal.trust_score}%</p>
+              {/* A bare "50%" says nothing to a reader. TrustBadge turns the
+                  same number into a named level with an explanation. */}
+              <div className="bg-white/70 dark:bg-card px-4 py-2 rounded-xl text-center flex items-center justify-center">
+                <TrustBadge score={animal.trust_score} />
               </div>
             </div>
           )}
