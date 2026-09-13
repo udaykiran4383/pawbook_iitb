@@ -128,6 +128,8 @@ export const useAnimalStore = create<AnimalStore>()(
           animals: sanitizeAnimals(state.animals.map((a) => {
             if (a.id !== animalId) return a;
             let updates: Partial<Animal> = {};
+            // Any sighting of an animal marked "on leave" brings them back.
+            if (a.status === 'missing') updates.status = 'active';
             if (actionType === 'seen') {
               updates.last_seen = now;
               updates.last_seen_by = userName;

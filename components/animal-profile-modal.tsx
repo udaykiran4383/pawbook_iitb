@@ -15,6 +15,7 @@ import TrustBadge from '@/components/trust-badge';
 import DictateButton from '@/components/dictate-button';
 import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memory-prompts';
 import ObservationForm from '@/components/observation-form';
+import { LIFECYCLE, suggestedLifecycle } from '@/lib/lifecycle';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -135,6 +136,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const lastSeenBy = getDisplayActorName(animal.last_seen_by, animal.contributor);
   const lastFedBy = getDisplayActorName(animal.last_fed_by, animal.contributor);
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);
+  const lifecycleSuggestion = suggestedLifecycle(animal);
 
   const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'gallery', label: 'Photos', icon: '📸' },
@@ -165,13 +167,42 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
           <X size={20} />
         </button>
 
+        {/* Suggested, never automatic: six quiet weeks is usually the app not
+            being opened, so a person confirms. Reversible the moment someone
+            spots them. */}
+        {lifecycleSuggestion && (
+          <div className="mx-6 mt-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-2xl p-3 flex items-start gap-3">
+            <span className="text-xl" aria-hidden="true">🧳</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-foreground leading-snug">{lifecycleSuggestion.reason}</p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => useAnimalStore.getState().updateAnimal(animal.id, { status: lifecycleSuggestion.to })}
+                  className="text-xs font-bold bg-foreground text-background rounded-full px-3 py-1.5 active:scale-95 transition"
+                >
+                  Mark on leave
+                </button>
+                <button
+                  type="button"
+                  onClick={() => useAnimalStore.getState().logCareAction(animal.id, 'seen')}
+                  className="text-xs font-bold border border-border text-foreground rounded-full px-3 py-1.5 active:scale-95 transition"
+                >
+                  I saw them recently
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero header */}
         <div className={`relative pt-8 pb-6 px-6 bg-gradient-to-br ${isDeceased ? 'from-purple-100 via-gray-100 to-purple-50' : 'from-pink-100 via-orange-50 to-yellow-50'}`}>
-          {isDeceased && (
-            <div className="absolute top-4 left-4 bg-purple-600/80 text-white text-xs px-4 py-1 font-bold rounded-full shadow-md">
-              🌈 Rainbow Bridge
-            </div>
-          )}
+          {/* Lifecycle chip — on campus / on leave / graduated / passed away. */}
+          <div className={`absolute top-4 left-4 text-xs px-4 py-1 font-bold rounded-full shadow-md ${
+            isDeceased ? 'bg-purple-600/80 text-white' : 'bg-white/90 dark:bg-card text-foreground'
+          }`}>
+            <span aria-hidden="true">{LIFECYCLE[animal.status]?.emoji}</span> {LIFECYCLE[animal.status]?.label ?? animal.status}
+          </div>
 
           {/* Profile image */}
           <div className="relative w-28 h-28 mx-auto mb-4 group">

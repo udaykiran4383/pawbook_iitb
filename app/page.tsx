@@ -17,6 +17,7 @@ import SiteHero from '@/components/site-hero';
 import NeedsYouMost from '@/components/needs-you-most';
 import { getPresence } from '@/lib/presence';
 import { needsAttention } from '@/lib/survey';
+import CampusCensus from '@/components/campus-census';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -91,6 +92,8 @@ export default function Home() {
         <SiteHero
           stats={{ activeAnimals: activeAnimals.length, totalLikes, totalMemories }}
         />
+
+        <CampusCensus animals={animals} />
 
         <NeedsYouMost animals={activeAnimals} onOpenProfile={setSelectedAnimal} />
 
