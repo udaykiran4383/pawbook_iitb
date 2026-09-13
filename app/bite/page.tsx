@@ -19,6 +19,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // Fully static: no data, no network. This page has to work at a gate at 2 a.m.
+// public/sw.js precaches it and serves it cache-first, so once someone has
+// opened it on this phone it opens again with no signal at all.
 export const dynamic = 'force-static';
 
 export default async function BitePage({ params }: PageProps) {

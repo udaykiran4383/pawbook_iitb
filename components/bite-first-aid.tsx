@@ -9,7 +9,8 @@ const TIMER_KEY = 'pawbook_bite_observation_start';
 const LANG_KEY = 'pawbook_first_aid_lang';
 
 /**
- * The bite page. Static, three languages, works with no network.
+ * The bite page. Static, three languages, works with no network — the service
+ * worker in public/sw.js keeps a copy once it has been opened.
  *
  * The two steps that decide whether someone lives — wash for fifteen minutes,
  * hospital today — are visually separate from everything else. The rest is

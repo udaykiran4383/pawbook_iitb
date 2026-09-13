@@ -3,6 +3,7 @@ import { Nunito, Quicksand } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import ThemeToggle from '@/components/theme-toggle'
+import RegisterSW from '@/components/register-sw'
 import IdentityControl from '@/components/identity-control'
 import { CampusProvider } from '@/components/campus-provider'
 import CampusSwitcher from '@/components/campus-switcher'
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
   },
+  manifest: '/manifest.webmanifest',
 }
 
 export default function RootLayout({
@@ -46,6 +48,7 @@ export default function RootLayout({
           <CampusProvider slug={DEFAULT_CAMPUS_SLUG}>
             <CampusSwitcher />
             <ThemeToggle />
+            <RegisterSW />
             <IdentityControl />
             {children}
           </CampusProvider>
