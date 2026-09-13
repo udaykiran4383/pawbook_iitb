@@ -1,0 +1,124 @@
+/**
+ * Records in the shape an institution can file.
+ *
+ * Since 19 May 2026 every educational institution in India has a named officer
+ * answerable for the animals on its campus, and municipalities must keep
+ * "digital, auditable records" of every stray. The people holding those roles
+ * do not want an app; they want a register they can attach to an affidavit or
+ * hand to a survey team. This produces that register, from the same data the
+ * students already keep, in the vocabulary the survey teams already use.
+ *
+ * It is a CSV because that is what gets opened. Coordinates are never
+ * included — the register carries zones, which is what the ABC Rules' own
+ * "territory-wise" language asks for and what is safe to circulate.
+ */
+
+import type { Animal } from './demo-data';
+import { lifecycleLabel } from './lifecycle';
+import { getPresence } from './presence';
+import { describeRange, sightingsOf } from './sightings';
+import { summariseObservation } from './survey';
+import { getCoverage } from './coverage';
+
+function cell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const s = String(value);
+  // Quote when needed; double any embedded quotes.
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function row(values: unknown[]): string {
+  return values.map(cell).join(',');
+}
+
+function isoDate(value: unknown): string {
+  const t = typeof value === 'string' ? Date.parse(value) : NaN;
+  return Number.isNaN(t) ? '' : new Date(t).toISOString().slice(0, 10);
+}
+
+function latestRecord(animal: Animal, pattern: RegExp): string {
+  const records = Array.isArray(animal.medical_records) ? animal.medical_records : [];
+  const dates = records
+    .filter((r: any) => pattern.test(`${r?.title ?? ''} ${r?.record_type ?? ''} ${r?.description ?? ''}`.toLowerCase()))
+    .map((r: any) => Date.parse(r?.record_date ?? r?.date ?? ''))
+    .filter((t) => !Number.isNaN(t));
+  return dates.length ? new Date(Math.max(...dates)).toISOString().slice(0, 10) : '';
+}
+
+/** One line per animal: the register. */
+export function animalRegisterCsv(animals: Animal[], now = Date.now()): string {
+  const header = [
+    'pawbook_id', 'name', 'species', 'status', 'home_zone', 'usual_range',
+    'sex', 'age_class', 'body_condition', 'collar_seen', 'ear_notch_seen', 'visible_wound',
+    'sterilisation_recorded_on', 'last_rabies_vaccination_on',
+    'first_recorded_on', 'last_seen_on', 'days_since_seen', 'sightings_logged',
+    'medical_records', 'memories',
+  ];
+  const lines = [row(header)];
+  for (const a of animals) {
+    const presence = getPresence(a, now);
+    const obs = a.observation ?? {};
+    lines.push(row([
+      a.id, a.name, a.animal_type, lifecycleLabel(a.status), a.location, describeRange(a.sightings),
+      obs.sex ?? '', obs.age_class ?? '', obs.body_condition ?? '',
+      obs.collar_seen ? 'yes' : '', obs.ear_notch_seen ? 'yes' : '', obs.visible_wound ? 'yes' : '',
+      latestRecord(a, /steril|spay|neuter|castrat|\babc\b/), latestRecord(a, /rabies|\barv\b/),
+      isoDate(a.created_at), isoDate(a.last_seen), presence.daysSinceSeen ?? '', sightingsOf(a).length,
+      Array.isArray(a.medical_records) ? a.medical_records.length : 0,
+      Array.isArray(a.memories) ? a.memories.length : 0,
+    ]));
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** One line per sighting: the movement log. Zones only. */
+export function sightingsCsv(animals: Animal[]): string {
+  const lines = [row(['pawbook_id', 'name', 'species', 'date', 'time_utc', 'zone', 'contact'])];
+  for (const a of animals) {
+    for (const s of sightingsOf(a)) {
+      const t = Date.parse(s.at);
+      if (Number.isNaN(t)) continue;
+      const d = new Date(t).toISOString();
+      lines.push(row([a.id, a.name, a.animal_type, d.slice(0, 10), d.slice(11, 19), s.zone, s.kind]));
+    }
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** One line per medical event. Veterinarian is included: it is provenance, not a volunteer's identity. */
+export function medicalCsv(animals: Animal[]): string {
+  const lines = [row(['pawbook_id', 'name', 'species', 'date', 'record_type', 'title', 'description', 'veterinarian'])];
+  for (const a of animals) {
+    for (const r of (Array.isArray(a.medical_records) ? a.medical_records : []) as any[]) {
+      lines.push(row([a.id, a.name, a.animal_type, isoDate(r?.record_date ?? r?.date), r?.record_type, r?.title, r?.description, r?.veterinarian]));
+    }
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** The cover sheet: what the register is, and the honest denominators. */
+export function summaryText(animals: Animal[], campusName: string, estimatedPopulation: number | undefined, now = Date.now()): string {
+  const living = animals.filter((a) => a.status !== 'deceased');
+  const cov = getCoverage(animals, now);
+  const unseen = living.filter((a) => getPresence(a, now).state === 'unseen').length;
+  const flagged = living.filter((a) => a.observation?.visible_wound || a.observation?.body_condition === 'thin').length;
+  const when = new Date(now).toISOString().slice(0, 10);
+  return [
+    `PawBook register — ${campusName} — generated ${when}`,
+    '',
+    `Animals on record: ${animals.length} (${living.length} living)`,
+    estimatedPopulation
+      ? `Estimated campus population: ~${estimatedPopulation}. This register covers roughly ${Math.round((living.length / estimatedPopulation) * 100)}% of it and is NOT a census.`
+      : 'No campus population estimate configured; this register is not a census.',
+    '',
+    `Sterilisation recorded: ${cov.sterilised} of ${cov.denominator} living animals on record`,
+    `Rabies vaccination in the last 12 months: ${cov.rabiesCurrent} of ${cov.denominator}`,
+    `Not seen in 45+ days: ${unseen}`,
+    `Flagged on survey (wound or thin): ${flagged}`,
+    '',
+    'Counts come from confirmed medical records only. An ear notch is recorded as observed and is not treated as proof of sterilisation.',
+    'Locations are zones, never coordinates. Contributor identities are not included.',
+    '',
+    'Files: register.csv (one line per animal), sightings.csv (movement log), medical.csv (vet events).',
+  ].join('\n');
+}

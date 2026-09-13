@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Eye, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
+import { campus } from '@/lib/campus';
 
 interface QuickSightingProps {
   animalId: number;
@@ -61,6 +62,7 @@ export default function QuickSighting({ animalId, animalName, homeZone }: QuickS
         <input
           value={zone}
           onChange={(e) => setZone(e.target.value)}
+          list="pawbook-zones"
           aria-label="Where are they"
           placeholder="Where? e.g. H11"
           className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-input bg-background text-foreground text-sm focus:outline-none"
@@ -73,6 +75,10 @@ export default function QuickSighting({ animalId, animalName, homeZone }: QuickS
           Log sighting
         </button>
       </div>
+      {/* Suggestions only; free text is still allowed. */}
+      <datalist id="pawbook-zones">
+        {campus.zones.map((z) => <option key={z} value={z} />)}
+      </datalist>
       <p className="text-[10px] text-muted-foreground mt-1.5">
         Just the area — no exact location is ever stored.
       </p>

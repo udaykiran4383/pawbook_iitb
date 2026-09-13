@@ -18,6 +18,8 @@ import NeedsYouMost from '@/components/needs-you-most';
 import { getPresence } from '@/lib/presence';
 import { needsAttention } from '@/lib/survey';
 import CampusCensus from '@/components/campus-census';
+import { campus } from '@/lib/campus';
+import ExportRegister from '@/components/export-register';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -207,6 +209,8 @@ export default function Home() {
         {/* Rainbow Bridge Section */}
         <section className="max-w-6xl mx-auto px-4 pb-8">
           <RainbowBridge animals={deceasedAnimals} onOpenProfile={setSelectedAnimal} />
+
+          <ExportRegister />
         </section>
 
         {/* Emergency Cases */}
@@ -251,7 +255,7 @@ export default function Home() {
 
           <p className="flex items-center justify-center gap-2 text-xs opacity-70">
             <Sparkles size={14} />
-            Made with love for IITB animals
+            Made with love for {campus.shortName} animals
             <Sparkles size={14} />
           </p>
         </footer>

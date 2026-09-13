@@ -1,4 +1,5 @@
 import { Heart } from 'lucide-react';
+import { campus } from '@/lib/campus';
 
 interface SiteHeroProps {
   /**
@@ -31,7 +32,7 @@ export default function SiteHero({ stats }: SiteHeroProps) {
             PawBook
           </h1>
         </div>
-        <p className="text-sm font-bold text-primary tracking-widest uppercase mb-3">IIT Bombay</p>
+        <p className="text-sm font-bold text-primary tracking-widest uppercase mb-3">{campus.name}</p>
         <p className="text-xl md:text-2xl text-muted-foreground mb-2 handwritten">
           Every campus animal has a story
         </p>

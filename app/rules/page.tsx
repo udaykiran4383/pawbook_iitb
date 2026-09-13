@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { campus, appName } from '@/lib/campus';
 
 export const metadata: Metadata = {
-  title: 'How we care for campus animals · PawBook IITB',
+  title: `How we care for campus animals · ${appName}`,
   description:
-    'Shared ground rules for feeding and looking after the animals of IIT Bombay — fixed spots, fixed times, cleared bowls, and what to do if someone is hurt.',
+    `Shared ground rules for feeding and looking after the animals of ${campus.name} — fixed spots, fixed times, cleared bowls, and what to do if someone is hurt.`,
 };
 
 /*
@@ -94,7 +95,7 @@ export default function RulesPage() {
         <p className="text-xs text-muted-foreground mt-8 leading-relaxed">
           These are community guidelines, not legal advice. Official requirements for animals on
           campus are set by the Institute and by the courts, and change; if you are organising
-          feeding as a group, ask the Dean of Students&apos; office what is currently required of you
+          feeding as a group, ask {campus.authorityOffice} what is currently required of you
           before you start.
         </p>
       </div>

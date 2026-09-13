@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { MapPin, Loader, Check, X } from 'lucide-react';
 import { quantizeCoords, type Coords } from '@/lib/duplicate-detection';
+import { onCampus } from '@/lib/campus';
 
 interface LocationCaptureProps {
   value: Coords | null;
@@ -11,17 +12,7 @@ interface LocationCaptureProps {
 
 type Status = 'idle' | 'locating' | 'captured' | 'denied' | 'unavailable' | 'inaccurate';
 
-/** IIT Bombay's Powai campus, generously bounded. */
-const CAMPUS = { minLat: 19.115, maxLat: 19.145, minLng: 72.900, maxLng: 72.930 };
-
-function onCampus(coords: Coords): boolean {
-  return (
-    coords.lat >= CAMPUS.minLat &&
-    coords.lat <= CAMPUS.maxLat &&
-    coords.lng >= CAMPUS.minLng &&
-    coords.lng <= CAMPUS.maxLng
-  );
-}
+// Campus bounds come from lib/campus.ts, so another campus changes one env var.
 
 /**
  * Optional, deliberately coarse location capture for a new animal.
@@ -59,7 +50,7 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
         });
         // A fix from across the city is worse than none: it would make a distant
         // animal look like a duplicate of whatever is nearest to the bad point.
-        if (!onCampus(coords)) {
+        if (!onCampus(coords.lat, coords.lng)) {
           setStatus('inaccurate');
           onChange(null);
           return;

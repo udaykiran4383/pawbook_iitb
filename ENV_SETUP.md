@@ -506,3 +506,9 @@ pg_dump $POSTGRES_URL > backup.sql
 
 Once all checklist items are complete, your PawBook IITB application is ready for production use by the IITB community!
 
+
+## Deploying for another campus
+
+Every campus-specific value — name, bounds, zones, welfare group, authority
+office, population estimate — is an environment variable with an IIT Bombay
+default. See `DEPLOY_YOUR_CAMPUS.md`. Nothing needs forking.

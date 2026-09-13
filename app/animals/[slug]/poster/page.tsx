@@ -7,6 +7,7 @@ import { animalIdFromSlug, animalPath } from '@/lib/animal-slug';
 import { getAnimalById } from '@/lib/state-server';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
+import { campus, appName } from '@/lib/campus';
 
 export const revalidate = 300;
 
@@ -15,15 +16,13 @@ interface PageProps {
 }
 
 export const metadata: Metadata = {
-  title: 'Printable card · PawBook IITB',
+  title: `Printable card · ${appName}`,
   // A poster is for printing and pinning up, not for indexing.
   robots: { index: false, follow: false },
 };
 
 function siteOrigin(): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'https://pawbookiitb.vercel.app';
+  return campus.siteUrl;
 }
 
 // A poster goes on a public wall, so it gets the same allowlisted view.
@@ -56,7 +55,7 @@ export default async function PosterPage({ params }: PageProps) {
    * campus/NGO number has actually been dialled and confirmed; until then the
    * card prints a blank line for whoever puts it up to fill in by hand.
    */
-  const emergencyContact = process.env.NEXT_PUBLIC_EMERGENCY_CONTACT ?? null;
+  const emergencyContact = campus.emergencyContact ?? null;
 
   return (
     <>
@@ -91,7 +90,7 @@ export default async function PosterPage({ params }: PageProps) {
               must not follow the viewer's dark theme. */}
           <article className="poster bg-white border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
             <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-amber-700">
-              PawBook · IIT Bombay
+              PawBook · {campus.name}
             </p>
 
             <img

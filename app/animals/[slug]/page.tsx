@@ -11,6 +11,7 @@ import type { Animal } from '@/lib/demo-data';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
 import { describeRange } from '@/lib/sightings';
 import QuickSighting from '@/components/quick-sighting';
+import { campus, appName } from '@/lib/campus';
 
 // The underlying row changes as students log care, so don't serve a stale page
 // for long — but do let the CDN absorb a burst of QR scans.
@@ -37,20 +38,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const animal = await loadAnimal(slug);
 
   if (!animal) {
-    return { title: 'Animal not found · PawBook IITB' };
+    return { title: `Animal not found · ${appName}` };
   }
 
   const where = animal.location ? ` · ${animal.location}` : '';
   const description =
     animal.description?.trim() ||
-    `Meet ${animal.name}, a campus ${animal.animal_type ?? 'animal'} at IIT Bombay.`;
+    `Meet ${animal.name}, a campus ${animal.animal_type ?? 'animal'} at ${campus.name}.`;
   const image = animal.profile_image ? optimizeImageUrl(animal.profile_image, { width: 1200 }) : null;
 
   return {
-    title: `${animal.name}${where} · PawBook IITB`,
+    title: `${animal.name}${where} · ${appName}`,
     description,
     openGraph: {
-      title: `${animal.name} · PawBook IITB`,
+      title: `${animal.name} · ${appName}`,
       description,
       type: 'profile',
       url: animalPath(animal),
@@ -58,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: image ? 'summary_large_image' : 'summary',
-      title: `${animal.name} · PawBook IITB`,
+      title: `${animal.name} · ${appName}`,
       description,
       images: image ? [image] : undefined,
     },

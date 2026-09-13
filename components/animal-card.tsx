@@ -11,6 +11,7 @@ import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { animalPath } from '@/lib/animal-slug';
 import { optimizeImageUrl } from '@/lib/image-url';
 import { getPresence } from '@/lib/presence';
+import { appName } from '@/lib/campus';
 
 // Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
 
@@ -66,7 +67,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       const text = `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`;
 
       if (navigator.share) {
-        await navigator.share({ title: `${animal.name} - PawBook IITB`, text, url });
+        await navigator.share({ title: `${animal.name} - ${appName}`, text, url });
       } else {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareNote('Link copied! 🐾');

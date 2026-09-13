@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Shield, Phone, ExternalLink, ChevronDown, ChevronUp, Users, MessageCircle } from 'lucide-react';
+import { campus } from '@/lib/campus';
 
 export default function CommunityInfo() {
   const [expandedSection, setExpandedSection] = useState<string | null>('rules');
@@ -101,7 +102,7 @@ export default function CommunityInfo() {
               </div>
               <div className="flex-1">
                 <p className="font-bold text-foreground text-sm">Join WhatsApp Group</p>
-                <p className="text-xs text-muted-foreground">IITB Animal Welfare Community</p>
+                <p className="text-xs text-muted-foreground">{campus.welfareGroup ?? "Campus Animal Welfare Group"}</p>
               </div>
               <ExternalLink size={16} className="text-green-600 dark:text-green-400" />
             </a>
