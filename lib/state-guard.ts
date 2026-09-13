@@ -77,6 +77,20 @@ export function checkStatePayload(data: unknown): GuardResult {
     if (animal.id === undefined || animal.id === null) {
       return fail(400, 'Each animal needs an id');
     }
+    const sightings = (animal as any).sightings;
+    if (sightings !== undefined && sightings !== null) {
+      if (!Array.isArray(sightings)) return fail(400, 'sightings must be an array');
+      if (sightings.length > MAX_LIST_ITEMS) return fail(413, 'Too many sightings');
+      for (const s of sightings) {
+        if (!s || typeof s !== 'object') return fail(400, 'Each sighting must be an object');
+        // Zones only. A sighting carrying lat/lng is exactly the record the
+        // coarse-location design exists to prevent.
+        if ('lat' in s || 'lng' in s || 'coords' in s || 'location_coords' in s) {
+          return fail(400, 'Sightings may not carry coordinates');
+        }
+      }
+    }
+
     for (const key of ['comments', 'memories', 'medical_records', 'gallery']) {
       const list = (animal as any)[key];
       if (list === undefined || list === null) continue;

@@ -40,6 +40,8 @@ export interface PublicAnimal {
   death_date?: string;
   memories: Array<{ id?: string; text?: string; content?: string; timestamp?: string }>;
   comments: Array<{ id?: string; text?: string; timestamp?: string }>;
+  /** Zone-level only, and without the pseudonym of who logged it. */
+  sightings: Array<{ id: string; at: string; zone: string; kind: string }>;
 }
 
 function publicMemory(memory: any) {
@@ -75,6 +77,9 @@ export function toPublicAnimal(animal: Animal): PublicAnimal {
     death_date: (animal as any).death_date,
     memories: Array.isArray(animal.memories) ? animal.memories.map(publicMemory) : [],
     comments: Array.isArray(animal.comments) ? animal.comments.map(publicComment) : [],
+    sightings: Array.isArray(animal.sightings)
+      ? animal.sightings.map((s) => ({ id: s.id, at: s.at, zone: s.zone, kind: s.kind }))
+      : [],
   };
 }
 

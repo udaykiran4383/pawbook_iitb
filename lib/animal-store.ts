@@ -4,6 +4,7 @@ import { supabase } from './supabase-client';
 import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './demo-data';
 import type { EmergencyCase } from './emergency';
 import type { Observation } from './survey';
+import { appendSighting, newSighting } from './sightings';
 import { getUserName } from './utils';
 
 interface AnimalStore {
@@ -24,6 +25,8 @@ interface AnimalStore {
   logCareAction: (animalId: number, actionType: 'seen' | 'fed' | 'treated' | 'sheltered') => void;
   /** Merge survey fields into the animal; also counts as a sighting. */
   recordObservation: (animalId: number, observation: Observation) => void;
+  /** "I'm seeing them now, here" — a sighting at a named zone. */
+  logSighting: (animalId: number, zone: string, note?: string) => void;
 }
 
 function sanitizeAnimals(input: unknown): Animal[] {
@@ -106,6 +109,22 @@ export const useAnimalStore = create<AnimalStore>()(
       addMedicalRecord: (animalId, record) => set((state) => ({
         animals: sanitizeAnimals(state.animals.map((a) => a.id === animalId ? { ...a, medical_records: [record, ...(Array.isArray(a.medical_records) ? a.medical_records : [])] } : a))
       })),
+      logSighting: (animalId, zone, note) => set((state) => {
+        const now = new Date().toISOString();
+        const by = getUserName();
+        return {
+          animals: sanitizeAnimals(state.animals.map((a) => {
+            if (a.id !== animalId) return a;
+            return {
+              ...a,
+              ...(a.status === 'missing' ? { status: 'active' as const } : {}),
+              last_seen: now,
+              last_seen_by: by,
+              sightings: appendSighting(a.sightings, newSighting('seen', zone || a.location, by, note)),
+            };
+          })),
+        };
+      }),
       recordObservation: (animalId, observation) => set((state) => {
         const now = new Date().toISOString();
         return {
@@ -117,6 +136,7 @@ export const useAnimalStore = create<AnimalStore>()(
               // Filling in the survey means you are looking at the animal.
               last_seen: now,
               last_seen_by: getUserName(),
+              sightings: appendSighting(a.sightings, newSighting('observation', a.location, getUserName())),
             };
           })),
         };
@@ -144,6 +164,8 @@ export const useAnimalStore = create<AnimalStore>()(
               updates.last_cared_type = actionType;
               updates.trust_score = Math.min(100, a.trust_score + 2);
             }
+            // Every care action is also a sighting: you were there, at that zone.
+            updates.sightings = appendSighting(a.sightings, newSighting(actionType, a.location, userName));
             return { ...a, ...updates };
           }))
         };

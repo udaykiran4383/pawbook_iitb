@@ -121,6 +121,13 @@ export function mergeAnimal(current: Json, incoming: Json): Json {
   out.memories = unionById<Json>(current?.memories, incoming?.memories, mergeMemory);
   out.medical_records = unionById(current?.medical_records, incoming?.medical_records);
   out.gallery = unionById(current?.gallery, incoming?.gallery);
+  // Sightings are append-only, so a union by id is the exact answer; then keep
+  // the newest and re-apply the cap so two long lists cannot merge past it.
+  if (current?.sightings !== undefined || incoming?.sightings !== undefined) {
+    out.sightings = unionById<Json>(current?.sightings, incoming?.sightings)
+      .sort((a, b) => Date.parse(b?.at ?? 0) - Date.parse(a?.at ?? 0))
+      .slice(0, 200);
+  }
 
   // A survey observation is one coherent snapshot; the newer snapshot wins
   // whole rather than field-by-field, so sex from one visit cannot be paired

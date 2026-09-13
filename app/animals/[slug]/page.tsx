@@ -9,6 +9,8 @@ import { optimizeImageUrl } from '@/lib/image-url';
 import { formatTimeSince } from '@/lib/care-tracking';
 import type { Animal } from '@/lib/demo-data';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
+import { describeRange } from '@/lib/sightings';
+import QuickSighting from '@/components/quick-sighting';
 
 // The underlying row changes as students log care, so don't serve a stale page
 // for long — but do let the CDN absorb a burst of QR scans.
@@ -166,6 +168,13 @@ export default async function AnimalPage({ params }: PageProps) {
             </ul>
           )}
 
+          {!isDeceased && describeRange(animal.sightings) && (
+            <p className="mt-4 text-sm text-muted-foreground flex items-center gap-1.5">
+              <MapPin size={14} className="flex-shrink-0" />
+              {describeRange(animal.sightings)}
+            </p>
+          )}
+
           {!isDeceased && (
             <div className="grid grid-cols-2 gap-3 mt-5">
               <Fact
@@ -234,6 +243,10 @@ export default async function AnimalPage({ params }: PageProps) {
             </p>
           </footer>
         </article>
+
+        {!isDeceased && (
+          <QuickSighting animalId={animal.id} animalName={animal.name} homeZone={animal.location} />
+        )}
 
         <div className="text-center mt-6 space-y-3">
           <Link

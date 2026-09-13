@@ -16,6 +16,7 @@ import DictateButton from '@/components/dictate-button';
 import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memory-prompts';
 import ObservationForm from '@/components/observation-form';
 import { LIFECYCLE, suggestedLifecycle } from '@/lib/lifecycle';
+import WhereTheyveBeen from '@/components/where-theyve-been';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -568,6 +569,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               <p className="text-sm text-muted-foreground text-center">
                 Care events are logged when students record feeding, sightings, and medical care.
               </p>
+              <WhereTheyveBeen animal={animal} showLog />
               <ObservationForm animalId={animal.id} current={animal.observation} />
               <CareTracker animalId={animal.id} />
             </div>

@@ -29,6 +29,7 @@ export interface MedicalRecord {
 }
 
 import type { Observation } from './survey';
+import type { Sighting } from './sightings';
 
 export interface Animal {
   id: number;
@@ -59,6 +60,8 @@ export interface Animal {
   death_note?: string;
   /** Survey-standard field observation. See lib/survey.ts. */
   observation?: Observation;
+  /** Zone-level history, newest first. See lib/sightings.ts. */
+  sightings?: Sighting[];
 }
 
 export const demoAnimals: Animal[] = [
