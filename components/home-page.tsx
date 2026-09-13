@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Search, Sparkles, Heart, Camera, BellRing } from 'lucide-react';
+import { Plus, Search, Sparkles, Heart, Camera, BellRing, Linkedin } from 'lucide-react';
 import AddAnimalModal from '@/components/add-animal-modal';
 import AnimalCard from '@/components/animal-card';
 import AnimalProfileModal from '@/components/animal-profile-modal';
@@ -239,21 +239,15 @@ export default function HomePage() {
           
           <div className="flex flex-col items-center justify-center gap-2 mb-4">
             <p className="text-xs font-medium text-muted-foreground">For website related issues, contact:</p>
-            <a 
-              href="https://www.linkedin.com/in/uday-yennampelly/" 
-              target="_blank" 
+            <a
+              href="https://www.linkedin.com/in/uday-yennampelly/"
+              target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 hover:bg-blue-50 px-4 py-2 rounded-full transition-colors group border border-transparent hover:border-blue-200"
+              aria-label="Contact on LinkedIn"
+              className="inline-flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/40 px-4 py-2 rounded-full transition-colors border border-transparent hover:border-blue-200 text-sm font-bold text-blue-600 dark:text-blue-300"
             >
-              <img 
-                src="/footer-linkedin-profile-dp.jpeg"
-                alt="Uday Yennampelly" 
-                className="w-6 h-6 rounded-full border-2 border-blue-100 group-hover:border-blue-400 transition-colors object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://api.dicebear.com/7.x/initials/svg?seed=Uday";
-                }}
-              />
-              <span className="text-sm font-bold text-blue-600 group-hover:text-blue-700">Uday Yennampelly</span>
+              <Linkedin size={16} aria-hidden="true" />
+              LinkedIn
             </a>
           </div>
 
