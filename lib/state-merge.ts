@@ -95,6 +95,52 @@ function mergeEmergency(a: Json, b: Json): Json {
   };
 }
 
+/**
+ * Feeding stations are edited by whoever walks past, so two phones routinely
+ * disagree about the same spot. Each timestamp keeps its newest value (with
+ * the name attached to it), and "needs food" is decided by which is more
+ * recent — the last stocking or the last empty-bowl flag — rather than by
+ * whichever write happened to land second. Whether the spot is in use at all
+ * follows the newer `updated_at`, since that is a decision rather than an
+ * observation.
+ */
+function mergeStation(current: Json, incoming: Json): Json {
+  const out: Json = { ...current };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value !== undefined && value !== null) out[key] = value;
+  }
+
+  mergeTimestampPair(out, current, incoming, 'last_stocked_at', 'last_stocked_by');
+  const clearedAt = newerTimestamp(current?.last_cleared_at, incoming?.last_cleared_at);
+  if (clearedAt !== undefined) out.last_cleared_at = clearedAt;
+
+  const flaggedAt = newerTimestamp(current?.needs_food_at, incoming?.needs_food_at);
+  if (flaggedAt !== undefined) out.needs_food_at = flaggedAt;
+  const stockedAt = typeof out.last_stocked_at === 'string' ? Date.parse(out.last_stocked_at) : NaN;
+  if (flaggedAt !== undefined || !Number.isNaN(stockedAt)) {
+    out.needs_food = flaggedAt !== undefined && (Number.isNaN(stockedAt) || Date.parse(flaggedAt) > stockedAt);
+  } else {
+    // Neither side has dated either event; an empty bowl reported anywhere
+    // stands until someone records stocking it.
+    out.needs_food = Boolean(current?.needs_food) || Boolean(incoming?.needs_food);
+  }
+
+  const updatedAt = newerTimestamp(current?.updated_at, incoming?.updated_at);
+  if (updatedAt !== undefined) {
+    out.updated_at = updatedAt;
+    const source = updatedAt === incoming?.updated_at ? incoming : current;
+    if (typeof source.active === 'boolean') out.active = source.active;
+  }
+
+  // A station's creation time only ever moves earlier, as for animals.
+  if (current?.created_at && incoming?.created_at) {
+    const newer = newerTimestamp(current.created_at, incoming.created_at);
+    out.created_at = newer === current.created_at ? incoming.created_at : current.created_at;
+  }
+
+  return out;
+}
+
 /** Memories carry their own like counts, which also only ever increase. */
 function mergeMemory(a: Json, b: Json): Json {
   return { ...a, ...b, likes: Math.max(Number(a?.likes) || 0, Number(b?.likes) || 0) };
@@ -190,6 +236,13 @@ export function mergeState(current: unknown, incoming: unknown): unknown {
       inc?.state?.emergencies,
       mergeEmergency,
     );
+  }
+
+  // Same rule for feeding stations: a spot known to one side is kept, and a
+  // pre-station blob merged with itself stays byte-for-byte the same.
+  const hasStations = cur?.state?.stations !== undefined || inc?.state?.stations !== undefined;
+  if (hasStations) {
+    mergedState.stations = unionById<Json>(cur?.state?.stations, inc?.state?.stations, mergeStation);
   }
 
   return { ...cur, ...inc, state: mergedState };
