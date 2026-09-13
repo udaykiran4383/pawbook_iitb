@@ -126,9 +126,11 @@ export const useAnimalStore = create<AnimalStore>()(
           // not pull one back from "at the vet".
           const status = statusOf(c);
           const waiting = status === 'open' || status === 'reopened';
+          // The status label already says "on the way"; a note is only
+          // needed when the report is past that and this is an extra pair of hands.
           const update = newEmergencyUpdate({
             by: responder,
-            note: 'is on the way',
+            note: waiting ? undefined : 'is also helping',
             status: waiting ? 'responder_on_way' : undefined,
           });
           return applyUpdate({ ...c, responders: [...responders, responder] }, update);

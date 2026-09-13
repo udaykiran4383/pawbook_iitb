@@ -7,7 +7,7 @@
 // year. So once someone has visited it, the page and the scripts it needs are
 // kept and served from cache first.
 
-const CACHE = 'pawbook-v1';
+const CACHE = 'pawbook-v2';
 const PRECACHE = ['/bite', '/rules'];
 
 self.addEventListener('install', (event) => {
@@ -25,8 +25,10 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// /bite and /c/<campus>/bite; nothing else.
-const isBitePage = (url) => /^\/(?:c\/[a-z0-9-]+\/)?bite\/?$/.test(url.pathname);
+// The two static pages: /bite and /rules, with or without a /c/<campus> prefix.
+// Both are precached above; this is what lets a navigation to them be answered
+// from that cache instead of only filling it.
+const isStaticPage = (url) => /^\/(?:c\/[a-z0-9-]+\/)?(?:bite|rules)\/?$/.test(url.pathname);
 
 // Serve the cached copy if there is one and refresh it in the background;
 // otherwise wait for the network and keep what comes back.
@@ -46,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Cache first: the copy we have is the copy that works offline.
-  if (request.mode === 'navigate' && isBitePage(url)) {
+  if (request.mode === 'navigate' && isStaticPage(url)) {
     event.respondWith(cachedOrFetch(request, true));
     return;
   }
