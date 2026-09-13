@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { supabase } from './supabase-client';
 import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './demo-data';
-import type { EmergencyCase } from './emergency';
+import { applyUpdate, newEmergencyUpdate, statusOf, type EmergencyCase, type EmergencyUpdate } from './emergency';
 import type { Observation } from './survey';
 import { appendSighting, newSighting } from './sightings';
 import { DEFAULT_CAMPUS_SLUG, isCampusSlug, stateIdFor } from './campuses';
@@ -29,7 +29,9 @@ interface AnimalStore {
   emergencies: EmergencyCase[];
   addEmergency: (report: EmergencyCase) => void;
   respondToEmergency: (id: string, responder: string) => void;
-  resolveEmergency: (id: string) => void;
+  resolveEmergency: (id: string, photo_url?: string) => void;
+  /** Append to a report's thread; if the update carries a status, move the report there. */
+  addEmergencyUpdate: (id: string, update: EmergencyUpdate) => void;
   setAnimals: (animals: Animal[]) => void;
   addAnimal: (animal: Animal) => void;
   updateAnimal: (id: number, data: Partial<Animal>) => void;
@@ -95,16 +97,37 @@ export const useAnimalStore = create<AnimalStore>()(
       addEmergency: (report) => set((state) => ({
         emergencies: [report, ...(Array.isArray(state.emergencies) ? state.emergencies : [])],
       })),
-      respondToEmergency: (id, responder) => set((state) => ({
+      // Every change to a report goes through its thread, so the status is
+      // always explained by an entry someone can read, and so the merge — which
+      // takes the newest entry's word for it — sees the same thing every
+      // client did.
+      addEmergencyUpdate: (id, update) => set((state) => ({
         emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) =>
-          c.id === id && !c.responders.includes(responder)
-            ? { ...c, responders: [...c.responders, responder] }
-            : c,
+          c.id === id ? applyUpdate(c, update) : c,
         ),
       })),
-      resolveEmergency: (id) => set((state) => ({
+      respondToEmergency: (id, responder) => set((state) => ({
+        emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) => {
+          if (c.id !== id) return c;
+          const responders = Array.isArray(c.responders) ? c.responders : [];
+          if (responders.includes(responder)) return c;
+          // Volunteering only moves a report forward from waiting; it should
+          // not pull one back from "at the vet".
+          const status = statusOf(c);
+          const waiting = status === 'open' || status === 'reopened';
+          const update = newEmergencyUpdate({
+            by: responder,
+            note: 'is on the way',
+            status: waiting ? 'responder_on_way' : undefined,
+          });
+          return applyUpdate({ ...c, responders: [...responders, responder] }, update);
+        }),
+      })),
+      resolveEmergency: (id, photo_url) => set((state) => ({
         emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) =>
-          c.id === id ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c,
+          c.id === id
+            ? applyUpdate(c, newEmergencyUpdate({ by: getUserName(), status: 'resolved', photo_url }))
+            : c,
         ),
       })),
       setAnimals: (animals) => set({ animals: sanitizeAnimals(animals) }),

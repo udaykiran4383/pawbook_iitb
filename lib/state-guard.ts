@@ -37,6 +37,11 @@ export type GuardResult = GuardFailure | GuardSuccess;
 
 const fail = (status: number, error: string): GuardFailure => ({ ok: false, status, error });
 
+/** True when a record has any of the keys a position would arrive under. */
+function carriesCoordinates(record: object): boolean {
+  return 'lat' in record || 'lng' in record || 'coords' in record || 'location_coords' in record;
+}
+
 /** Reject ids we do not recognise, so the table cannot be used as free storage. */
 export function checkStateId(id: unknown): GuardResult {
   if (typeof id !== 'string' || !id) return fail(400, 'Missing id');
@@ -88,7 +93,7 @@ export function checkStatePayload(data: unknown): GuardResult {
         if (!s || typeof s !== 'object') return fail(400, 'Each sighting must be an object');
         // Zones only. A sighting carrying lat/lng is exactly the record the
         // coarse-location design exists to prevent.
-        if ('lat' in s || 'lng' in s || 'coords' in s || 'location_coords' in s) {
+        if (carriesCoordinates(s)) {
           return fail(400, 'Sightings may not carry coordinates');
         }
       }
@@ -113,6 +118,21 @@ export function checkStatePayload(data: unknown): GuardResult {
       if (!report.id) return fail(400, 'Each emergency report needs an id');
       if (report.responders !== undefined && !Array.isArray(report.responders)) {
         return fail(400, 'responders must be an array');
+      }
+      // A report's place is prose ("behind H12 mess"). The same rule that keeps
+      // coordinates out of sightings keeps them out of reports and their thread.
+      if (carriesCoordinates(report)) return fail(400, 'Emergency reports may not carry coordinates');
+      const updates = report.updates;
+      if (updates !== undefined && updates !== null) {
+        if (!Array.isArray(updates)) return fail(400, 'updates must be an array');
+        if (updates.length > MAX_LIST_ITEMS) return fail(413, 'Too many emergency updates');
+        for (const update of updates) {
+          if (!update || typeof update !== 'object' || Array.isArray(update)) {
+            return fail(400, 'Each emergency update must be an object');
+          }
+          if (!update.id) return fail(400, 'Each emergency update needs an id');
+          if (carriesCoordinates(update)) return fail(400, 'Emergency updates may not carry coordinates');
+        }
       }
     }
   }

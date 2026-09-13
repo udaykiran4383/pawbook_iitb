@@ -1,28 +1,204 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useAnimalStore } from '@/lib/animal-store';
-import { getUserName } from '@/lib/utils';
-import { sortEmergencies, type EmergencyCase } from '@/lib/emergency';
+import { ANONYMOUS, getUserName } from '@/lib/identity';
+import {
+  STATUS_LABEL,
+  isClosed,
+  newEmergencyUpdate,
+  sortEmergencies,
+  sortUpdates,
+  statusOf,
+  updatesOf,
+  type EmergencyCase,
+  type EmergencyStatus,
+  type EmergencyUpdate,
+} from '@/lib/emergency';
+import { uploadImageToCloudinary } from '@/lib/upload-image';
 import { useCampus } from '@/components/campus-provider';
-import { AlertCircle, X, Upload } from 'lucide-react';
-import ImageUpload from './image-upload';
+import { X, Camera } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EmergencyCases() {
-  const { basePath } = useCampus();
-  const [showModal, setShowModal] = useState(false);
-  // Reports come from the shared store, so they survive a reload and are
-  // visible to everyone. This list used to be seeded in useState with two
-  // invented reports — a "critical" injured dog at the sports complex among
-  // them — which rendered on the homepage indistinguishably from real ones.
-  const stored = useAnimalStore((state) => state.emergencies);
-  const cases = useMemo(() => sortEmergencies(Array.isArray(stored) ? stored : []), [stored]);
-  const [formData, setFormData] = useState({
-    description: '',
-    severity: 'urgent' as const,
-    location: '',
-  });
+const statusPill: Record<EmergencyStatus, string> = {
+  open: 'bg-white/70 text-foreground',
+  responder_on_way: 'bg-blue-200 text-blue-900',
+  at_vet: 'bg-purple-200 text-purple-900',
+  resolved: 'bg-green-200 text-green-800',
+  reopened: 'bg-red-200 text-red-900',
+  closed_not_found: 'bg-gray-200 text-gray-800',
+  closed_duplicate: 'bg-gray-200 text-gray-800',
+};
+
+/** The statuses a person can pick from the update form. Resolving has its own button, with a photo. */
+const PICKABLE: EmergencyStatus[] = ['responder_on_way', 'at_vet', 'closed_not_found', 'closed_duplicate'];
+
+function when(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+type PanelMode = 'update' | 'resolve' | 'reopen';
+
+/**
+ * The one form behind "Add update", "Mark resolved" and "Not actually
+ * resolved". They differ only in which status they set and what they ask for,
+ * so one component keeps the photo-upload plumbing in one place.
+ */
+function UpdatePanel({
+  mode,
+  onSubmit,
+  onCancel,
+}: {
+  mode: PanelMode;
+  onSubmit: (fields: { note?: string; status?: EmergencyStatus; photo_url?: string }) => void;
+  onCancel: () => void;
+}) {
+  const [note, setNote] = useState('');
+  const [status, setStatus] = useState<EmergencyStatus | ''>('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const copy = {
+    update: {
+      title: 'Add an update',
+      hint: 'What has changed? A note, a photo, or both.',
+      photo: 'Add a photo',
+      submit: 'Post update',
+    },
+    resolve: {
+      title: 'Mark resolved',
+      hint: 'A photo of the animal now helps the next person believe it — optional.',
+      photo: 'Photo of the animal now',
+      submit: 'Resolve',
+    },
+    reopen: {
+      title: 'Not actually resolved',
+      hint: 'What is still wrong? A line is enough.',
+      photo: 'Add a photo',
+      submit: 'Reopen',
+    },
+  }[mode];
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      setPhoto(await uploadImageToCloudinary(file, 'pawbook/emergencies'));
+    } catch {
+      // A failed upload should not lose the note someone has typed.
+      setPhoto(null);
+      setFailed(true);
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const submit = () => {
+    if (busy) return;
+    const forced: EmergencyStatus | undefined = mode === 'resolve' ? 'resolved' : mode === 'reopen' ? 'reopened' : undefined;
+    const picked = forced ?? (status || undefined);
+    // An update with nothing in it says nothing; a status change on its own is fine.
+    if (!picked && !note.trim() && !photo) return;
+    onSubmit({ note, status: picked, photo_url: photo ?? undefined });
+  };
+
+  return (
+    <div className="bg-white/70 rounded-xl p-3 space-y-2">
+      <p className="text-sm font-bold text-foreground">{copy.title}</p>
+      <p className="text-xs text-muted-foreground">{copy.hint}</p>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        rows={2}
+        maxLength={500}
+        placeholder={mode === 'reopen' ? 'Still limping, same spot…' : 'Vet says fracture; kept overnight…'}
+        className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none"
+      />
+      {mode === 'update' && (
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value as EmergencyStatus | '')}
+          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="">Status unchanged</option>
+          {PICKABLE.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </option>
+          ))}
+        </select>
+      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className="inline-flex items-center gap-1 text-xs font-bold text-foreground border border-border rounded-full px-3 py-1 hover:bg-white disabled:opacity-60"
+        >
+          <Camera size={14} /> {busy ? 'Uploading…' : photo ? 'Change photo' : copy.photo}
+        </button>
+        {photo && <img src={photo} alt="" className="h-12 w-12 rounded-lg object-cover border border-border" />}
+        {failed && <span className="text-xs text-red-700">Upload failed — try again or post without it.</span>}
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2 text-sm font-bold border border-border text-foreground rounded-lg hover:bg-white"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={busy}
+          className="flex-1 py-2 text-sm font-bold bg-foreground text-background rounded-lg active:scale-95 disabled:opacity-60"
+        >
+          {copy.submit}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** The report's history, oldest first, as a compact thread. */
+function UpdateThread({ updates }: { updates: EmergencyUpdate[] }) {
+  if (updates.length === 0) return null;
+  return (
+    <ol className="space-y-1.5 border-t border-white/60 pt-2">
+      {sortUpdates(updates).map((u) => (
+        <li key={u.id} className="text-xs text-foreground/90 flex gap-2">
+          <span className="shrink-0 text-muted-foreground whitespace-nowrap">{when(u.at)}</span>
+          <span className="min-w-0">
+            <span className="font-bold">{u.by || ANONYMOUS}</span>
+            {u.status && <span className="ml-1 font-bold">· {STATUS_LABEL[u.status] ?? u.status}</span>}
+            {u.note && <span className="ml-1">— {u.note}</span>}
+            {u.photo_url && (
+              <a href={u.photo_url} target="_blank" rel="noreferrer" className="block mt-1">
+                <img src={u.photo_url} alt="" className="h-16 w-16 rounded-lg object-cover border border-white/60" />
+              </a>
+            )}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function EmergencyCard({ report }: { report: EmergencyCase }) {
+  const [panel, setPanel] = useState<PanelMode | null>(null);
+  const status = statusOf(report);
+  const closed = isClosed(status);
+  const responders = Array.isArray(report.responders) ? report.responders : [];
+  const updates = updatesOf(report);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -50,6 +226,97 @@ export default function EmergencyCases() {
     }
   };
 
+  // Resolving and reopening are ordinary updates that happen to carry a
+  // status, so the note and the photo land in the same thread entry as the
+  // change they explain.
+  const post = (fields: { note?: string; status?: EmergencyStatus; photo_url?: string }) => {
+    useAnimalStore.getState().addEmergencyUpdate(report.id, newEmergencyUpdate({ by: getUserName(), ...fields }));
+    setPanel(null);
+  };
+
+  return (
+    <div
+      className={`on-tint bg-gradient-to-br ${getSeverityColor(report.severity)} border-2 p-4 rounded-2xl soft-shadow hover:shadow-lg transition`}
+    >
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <span className="text-3xl">{getSeverityIcon(report.severity)}</span>
+        <span className={`${statusPill[status]} px-3 py-1 rounded-full text-xs font-bold text-right`}>
+          {STATUS_LABEL[status]}
+        </span>
+      </div>
+
+      <p className="font-bold text-foreground mb-2">{report.description}</p>
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+        <span>📍</span>
+        <span>{report.location}</span>
+      </div>
+
+      <div className="space-y-2">
+        {!closed && responders.length > 0 && (
+          <p className="text-xs text-center text-foreground/80">
+            {responders.length} {responders.length === 1 ? 'person is' : 'people are'} on the way
+          </p>
+        )}
+
+        {panel ? (
+          <UpdatePanel mode={panel} onSubmit={post} onCancel={() => setPanel(null)} />
+        ) : closed ? (
+          // One button after closure, on purpose. The person who finds the
+          // dog still limping should not have to work out which of five
+          // statuses to pick — they say it is not fixed, and it reopens.
+          <button
+            onClick={() => setPanel('reopen')}
+            className="w-full border border-white/60 text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95 hover:bg-white/40"
+          >
+            Not actually resolved
+          </button>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <button
+                onClick={() => useAnimalStore.getState().respondToEmergency(report.id, getUserName())}
+                className="flex-1 bg-white/70 hover:bg-white text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95"
+              >
+                I'm Helping
+              </button>
+              <button
+                onClick={() => setPanel('resolve')}
+                className="flex-1 border border-white/60 text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95 hover:bg-white/40"
+              >
+                Mark Resolved
+              </button>
+            </div>
+            <button
+              onClick={() => setPanel('update')}
+              className="w-full text-xs font-bold text-foreground/80 hover:text-foreground py-1"
+            >
+              + Add an update or photo
+            </button>
+          </>
+        )}
+
+        <UpdateThread updates={updates} />
+      </div>
+    </div>
+  );
+}
+
+export default function EmergencyCases() {
+  const { basePath } = useCampus();
+  const [showModal, setShowModal] = useState(false);
+  // Reports come from the shared store, so they survive a reload and are
+  // visible to everyone. This list used to be seeded in useState with two
+  // invented reports — a "critical" injured dog at the sports complex among
+  // them — which rendered on the homepage indistinguishably from real ones.
+  const stored = useAnimalStore((state) => state.emergencies);
+  const cases = useMemo(() => sortEmergencies(Array.isArray(stored) ? stored : []), [stored]);
+  const [formData, setFormData] = useState({
+    description: '',
+    severity: 'urgent' as const,
+    location: '',
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.description.trim() || !formData.location.trim()) return;
@@ -59,6 +326,8 @@ export default function EmergencyCases() {
       ...formData,
       images: [],
       timestamp: new Date().toISOString(),
+      status: 'open',
+      updates: [],
       resolved: false,
       responders: [],
     };
@@ -92,57 +361,8 @@ export default function EmergencyCases() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cases.map(emergencyCase => (
-            <div
-              key={emergencyCase.id}
-              className={`on-tint bg-gradient-to-br ${getSeverityColor(emergencyCase.severity)} border-2 p-4 rounded-2xl soft-shadow hover:shadow-lg transition`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-3xl">{getSeverityIcon(emergencyCase.severity)}</span>
-                {emergencyCase.resolved && (
-                  <span className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
-                    Resolved
-                  </span>
-                )}
-              </div>
-
-              <p className="font-bold text-foreground mb-2">{emergencyCase.description}</p>
-
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <span>📍</span>
-                <span>{emergencyCase.location}</span>
-              </div>
-
-              {/* This button previously had no onClick at all — it looked
-                  actionable and did nothing. */}
-              {emergencyCase.resolved ? (
-                <p className="w-full text-center py-2 text-sm font-bold text-green-700 dark:text-green-400">
-                  ✅ Resolved
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {emergencyCase.responders.length > 0 && (
-                    <p className="text-xs text-center text-foreground/80">
-                      {emergencyCase.responders.length} {emergencyCase.responders.length === 1 ? 'person is' : 'people are'} on the way
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => useAnimalStore.getState().respondToEmergency(emergencyCase.id, getUserName())}
-                      className="flex-1 bg-white/70 dark:bg-card hover:bg-white text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95"
-                    >
-                      I'm Helping
-                    </button>
-                    <button
-                      onClick={() => useAnimalStore.getState().resolveEmergency(emergencyCase.id)}
-                      className="flex-1 border border-white/60 dark:border-border text-foreground py-2 rounded-lg font-bold text-sm transition active:scale-95 hover:bg-white/40"
-                    >
-                      Mark Resolved
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {cases.map((report) => (
+            <EmergencyCard key={report.id} report={report} />
           ))}
         </div>
       )}
