@@ -27,6 +27,8 @@ interface AnimalStore {
   recordObservation: (animalId: number, observation: Observation) => void;
   /** "I'm seeing them now, here" — a sighting at a named zone. */
   logSighting: (animalId: number, zone: string, note?: string) => void;
+  /** "I looked and they were not there" — does NOT touch last_seen. */
+  logAbsence: (animalId: number, zone: string) => void;
 }
 
 function sanitizeAnimals(input: unknown): Animal[] {
@@ -108,6 +110,13 @@ export const useAnimalStore = create<AnimalStore>()(
       })),
       addMedicalRecord: (animalId, record) => set((state) => ({
         animals: sanitizeAnimals(state.animals.map((a) => a.id === animalId ? { ...a, medical_records: [record, ...(Array.isArray(a.medical_records) ? a.medical_records : [])] } : a))
+      })),
+      logAbsence: (animalId, zone) => set((state) => ({
+        animals: sanitizeAnimals(state.animals.map((a) =>
+          a.id === animalId
+            ? { ...a, sightings: appendSighting(a.sightings, newSighting('not_found', zone || a.location, getUserName())) }
+            : a,
+        )),
       })),
       logSighting: (animalId, zone, note) => set((state) => {
         const now = new Date().toISOString();

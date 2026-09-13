@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { MapPin } from 'lucide-react';
 import { formatTimeSince } from '@/lib/care-tracking';
-import { describeRange, sightingsOf, zoneSummary, type Sighting } from '@/lib/sightings';
+import { absencesOf, describeRange, sightingsOf, zoneSummary, type Sighting } from '@/lib/sightings';
 import type { Animal } from '@/lib/demo-data';
 
 interface WhereTheyveBeenProps {
@@ -19,6 +19,7 @@ const KIND_LABEL: Record<Sighting['kind'], string> = {
   sheltered: 'sheltered',
   observation: 'surveyed',
   emergency: 'reported',
+  not_found: 'looked, not found',
 };
 
 /**
@@ -30,6 +31,7 @@ const KIND_LABEL: Record<Sighting['kind'], string> = {
  */
 export default function WhereTheyveBeen({ animal, showLog = false }: WhereTheyveBeenProps) {
   const sightings = sightingsOf(animal);
+  const absences = absencesOf(animal);
   const zones = useMemo(() => zoneSummary(sightings, 4), [sightings]);
   const range = useMemo(() => describeRange(sightings), [sightings]);
 
@@ -58,7 +60,8 @@ export default function WhereTheyveBeen({ animal, showLog = false }: WhereTheyve
           Where they&apos;ve been
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {range} · {sightings.length} sighting{sightings.length === 1 ? '' : 's'}
+          {range} · {sightings.length - absences.length} sighting{sightings.length - absences.length === 1 ? '' : 's'}
+          {absences.length > 0 && ` · looked and not found ${absences.length}×`}
         </p>
       </div>
 

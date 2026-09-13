@@ -54,6 +54,7 @@ export default function CampusCensus({ animals }: CampusCensusProps) {
                 <br />
                 <span className="opacity-80">
                   {coverage.sterilised} of {coverage.denominator} on PawBook
+                  {coverage.sterilised > 0 && ` · ${coverage.sterilisedVerified} verified`}
                 </span>
               </p>
             </div>
@@ -66,6 +67,7 @@ export default function CampusCensus({ animals }: CampusCensusProps) {
                 <br />
                 <span className="opacity-80">
                   {coverage.rabiesCurrent} of {coverage.denominator} on PawBook
+                  {coverage.rabiesCurrent > 0 && ` · ${coverage.rabiesCurrentVerified} verified`}
                 </span>
               </p>
             </div>

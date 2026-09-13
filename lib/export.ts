@@ -96,6 +96,39 @@ export function medicalCsv(animals: Animal[]): string {
   return lines.join('\r\n') + '\r\n';
 }
 
+/**
+ * SHA-256 of a file's contents, hex. Printed on the cover sheet so anyone
+ * holding the register later can check that what they were given is what was
+ * generated — the "signed, dated" property an affidavit attachment needs,
+ * without any signing infrastructure.
+ */
+export async function contentHash(text: string): Promise<string> {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Everything the cover sheet needs, generated together so the hashes match the files. */
+export async function buildRegisterBundle(
+  animals: Animal[],
+  campusName: string,
+  estimatedPopulation: number | undefined,
+  now = Date.now(),
+): Promise<{ register: string; sightings: string; medical: string; summary: string }> {
+  const register = animalRegisterCsv(animals, now);
+  const sightings = sightingsCsv(animals);
+  const medical = medicalCsv(animals);
+  const [h1, h2, h3] = await Promise.all([contentHash(register), contentHash(sightings), contentHash(medical)]);
+  const summary =
+    summaryText(animals, campusName, estimatedPopulation, now) +
+    '\n\nIntegrity (SHA-256):\n' +
+    `register.csv   ${h1}\n` +
+    `sightings.csv  ${h2}\n` +
+    `medical.csv    ${h3}\n` +
+    '\nTo verify on any machine: shasum -a 256 <file>';
+  return { register, sightings, medical, summary };
+}
+
 /** The cover sheet: what the register is, and the honest denominators. */
 export function summaryText(animals: Animal[], campusName: string, estimatedPopulation: number | undefined, now = Date.now()): string {
   const living = animals.filter((a) => a.status !== 'deceased');

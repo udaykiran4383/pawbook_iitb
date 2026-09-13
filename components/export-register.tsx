@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { FileDown, ClipboardCopy, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
-import { animalRegisterCsv, sightingsCsv, medicalCsv, summaryText } from '@/lib/export';
+import { buildRegisterBundle } from '@/lib/export';
 import { campus } from '@/lib/campus';
 
 /**
@@ -32,9 +32,13 @@ export default function ExportRegister() {
     URL.revokeObjectURL(url);
   };
 
+  // One bundle, generated together, so the hashes on the cover sheet are the
+  // hashes of exactly the files downloaded.
+  const bundle = () => buildRegisterBundle(animals, campus.name, campus.estimatedPopulation);
+
   const copySummary = async () => {
     try {
-      await navigator.clipboard.writeText(summaryText(animals, campus.name, campus.estimatedPopulation));
+      await navigator.clipboard.writeText((await bundle()).summary);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -49,25 +53,26 @@ export default function ExportRegister() {
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
           The same records as spreadsheets, in the vocabulary survey teams use — for a Nodal
           Officer, an affidavit, or a municipal survey. Zones only, no coordinates, no names.
+          The cover sheet carries a SHA-256 of each file, so what is filed can be checked later.
         </p>
         <div className="flex flex-wrap gap-2 mt-3">
           <button
             type="button"
-            onClick={() => download(`pawbook-${slug}-register-${stamp}.csv`, animalRegisterCsv(animals))}
+            onClick={async () => download(`pawbook-${slug}-register-${stamp}.csv`, (await bundle()).register)}
             className="inline-flex items-center gap-1.5 text-xs font-bold bg-foreground text-background rounded-full px-3 py-2 active:scale-95 transition"
           >
             <FileDown size={14} /> Register
           </button>
           <button
             type="button"
-            onClick={() => download(`pawbook-${slug}-sightings-${stamp}.csv`, sightingsCsv(animals))}
+            onClick={async () => download(`pawbook-${slug}-sightings-${stamp}.csv`, (await bundle()).sightings)}
             className="inline-flex items-center gap-1.5 text-xs font-bold border border-border text-foreground rounded-full px-3 py-2 active:scale-95 transition"
           >
             <FileDown size={14} /> Sightings
           </button>
           <button
             type="button"
-            onClick={() => download(`pawbook-${slug}-medical-${stamp}.csv`, medicalCsv(animals))}
+            onClick={async () => download(`pawbook-${slug}-medical-${stamp}.csv`, (await bundle()).medical)}
             className="inline-flex items-center gap-1.5 text-xs font-bold border border-border text-foreground rounded-full px-3 py-2 active:scale-95 transition"
           >
             <FileDown size={14} /> Medical
@@ -77,7 +82,7 @@ export default function ExportRegister() {
             onClick={copySummary}
             className="inline-flex items-center gap-1.5 text-xs font-bold border border-border text-foreground rounded-full px-3 py-2 active:scale-95 transition"
           >
-            {copied ? <Check size={14} /> : <ClipboardCopy size={14} />} {copied ? 'Copied' : 'Copy summary'}
+            {copied ? <Check size={14} /> : <ClipboardCopy size={14} />} {copied ? 'Copied' : 'Copy cover sheet'}
           </button>
         </div>
       </div>

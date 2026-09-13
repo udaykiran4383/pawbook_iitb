@@ -19,7 +19,10 @@ export const RABIES_CURRENT_DAYS = 365;
 export interface Coverage {
   denominator: number;
   sterilised: number;
+  /** Subset of `sterilised` whose record came from the PHO or an AWO certificate. */
+  sterilisedVerified: number;
   rabiesCurrent: number;
+  rabiesCurrentVerified: number;
   rabiesEver: number;
   /** 0–100, or null when there is nothing to divide by. */
   sterilisedPct: number | null;
@@ -47,18 +50,28 @@ export function getCoverage(animals: Pick<Animal, 'status' | 'medical_records'>[
   // Living animals only: coverage of the dead is not a health metric.
   const living = animals.filter((a) => a.status !== 'deceased');
   let sterilised = 0;
+  let sterilisedVerified = 0;
   let rabiesEver = 0;
   let rabiesCurrent = 0;
+  let rabiesCurrentVerified = 0;
+  const verified = (r: any) => r?.source === 'pho_record' || r?.source === 'awo_certificate';
 
   for (const animal of living) {
     const records = Array.isArray(animal.medical_records) ? animal.medical_records : [];
-    if (records.some(isSterilisation)) sterilised += 1;
+    const ster = records.filter(isSterilisation);
+    if (ster.length) sterilised += 1;
+    if (ster.some(verified)) sterilisedVerified += 1;
 
-    const rabiesDates = records.filter(isRabiesVaccination).map(recordDate).filter((d): d is number => d !== null);
+    const rabies = records.filter(isRabiesVaccination);
+    const rabiesDates = rabies.map(recordDate).filter((d): d is number => d !== null);
     if (rabiesDates.length > 0) {
       rabiesEver += 1;
       const latest = Math.max(...rabiesDates);
-      if (now - latest <= RABIES_CURRENT_DAYS * 86_400_000) rabiesCurrent += 1;
+      if (now - latest <= RABIES_CURRENT_DAYS * 86_400_000) {
+        rabiesCurrent += 1;
+        const latestRec = rabies.find((r) => recordDate(r) === latest);
+        if (verified(latestRec)) rabiesCurrentVerified += 1;
+      }
     }
   }
 
@@ -67,7 +80,9 @@ export function getCoverage(animals: Pick<Animal, 'status' | 'medical_records'>[
   return {
     denominator: n,
     sterilised,
+    sterilisedVerified,
     rabiesCurrent,
+    rabiesCurrentVerified,
     rabiesEver,
     sterilisedPct: pct(sterilised),
     rabiesCurrentPct: pct(rabiesCurrent),

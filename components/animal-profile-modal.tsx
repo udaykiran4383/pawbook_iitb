@@ -152,6 +152,9 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
       record_type: (newMedicalRecord.record_type as any) || 'checkup',
       record_date: new Date().toISOString(),
       veterinarian: newMedicalRecord.veterinarian,
+      vet_reg_no: newMedicalRecord.vet_reg_no,
+      // Defaults to a feeder's report; verified sources have to be chosen.
+      source: newMedicalRecord.source ?? 'feeder_report',
       next_due: newMedicalRecord.next_due,
     });
     setNewMedicalRecord({});
@@ -223,6 +226,18 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
 
         {/* Hero header */}
         <div className={`on-tint relative pt-8 pb-6 px-6 bg-gradient-to-br ${isDeceased ? 'from-purple-100 via-gray-100 to-purple-50' : 'from-pink-100 via-orange-50 to-yellow-50'}`}>
+          {animal.external_ids?.pawfriend_uid && (
+            <a
+              href={`https://pawfriend.in/${encodeURIComponent(animal.external_ids.pawfriend_uid)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute top-4 right-14 text-[10px] font-bold bg-white/90 dark:bg-card text-foreground rounded-full px-3 py-1 shadow-md hover:underline"
+              title="This animal's QR-collar record in the campus/BMC programme"
+            >
+              🏷️ Collar record ↗
+            </a>
+          )}
+
           {/* Lifecycle chip — on campus / on leave / graduated / passed away. */}
           <div className={`absolute top-4 left-4 text-xs px-4 py-1 font-bold rounded-full shadow-md ${
             isDeceased ? 'bg-purple-600/80 text-white' : 'bg-white/90 dark:bg-card text-foreground'
@@ -619,6 +634,26 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                     placeholder="Veterinarian Name (Optional)"
                     className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-400"
                   />
+                  <input
+                    value={newMedicalRecord.vet_reg_no ?? ''}
+                    onChange={e => setNewMedicalRecord(f => ({ ...f, vet_reg_no: e.target.value }))}
+                    placeholder="Vet registration no. (optional, for the register)"
+                    className="w-full px-3 py-2 border border-blue-200 dark:border-border rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-white dark:bg-card text-foreground"
+                  />
+                  {/* Where a record comes from decides whether it counts toward the
+                      coverage figures. A feeder's word is kept and shown; only a
+                      PHO record or an AWO certificate is a number an officer can
+                      put in an affidavit. */}
+                  <select
+                    value={newMedicalRecord.source ?? 'feeder_report'}
+                    onChange={e => setNewMedicalRecord(f => ({ ...f, source: e.target.value as any }))}
+                    className="w-full px-3 py-2 border border-blue-200 dark:border-border rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-white dark:bg-card text-foreground"
+                  >
+                    <option value="feeder_report">I saw it / was told (unverified)</option>
+                    <option value="awo_certificate">From an NGO or vet certificate</option>
+                    <option value="pho_record">From the campus health office record</option>
+                    <option value="unknown">Not sure</option>
+                  </select>
                   <div className="flex gap-2">
                     <button onClick={() => setShowMedicalForm(false)} className="flex-1 border border-blue-300 text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-50 active:scale-95 transition text-sm">Cancel</button>
                     <button onClick={handleSaveMedicalRecord} disabled={!newMedicalRecord.title || !newMedicalRecord.description} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg active:scale-95 transition text-sm disabled:opacity-50">Save Record</button>
@@ -639,6 +674,15 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                       <span className="font-bold text-sm text-foreground">{record.title}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-1">{new Date(record.record_date).toLocaleDateString('en-IN')} {record.veterinarian && `• ${record.veterinarian}`}</p>
+                    {record.source && record.source !== 'unknown' && (
+                      <span className={`inline-block text-[10px] font-bold rounded-full px-2 py-0.5 mb-1 ${
+                        record.source === 'feeder_report'
+                          ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
+                          : 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-200'
+                      }`}>
+                        {record.source === 'feeder_report' ? 'reported, unverified' : 'verified record'}
+                      </span>
+                    )}
                     <p className="text-sm text-foreground">{record.description}</p>
                     {record.next_due && (
                       <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 font-bold">

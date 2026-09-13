@@ -18,8 +18,19 @@ export interface StudentMemory {
   memory_type: 'happy' | 'funny' | 'touching' | 'tribute' | 'goodbye';
 }
 
+/**
+ * Where a medical record came from. Coverage figures count only the first two;
+ * a feeder's report is shown as "reported, unverified". That is the difference
+ * between "90–95% sterilised per the PHO" and a number a Nodal Officer can
+ * defend in an affidavit.
+ */
+export type RecordSource = 'pho_record' | 'awo_certificate' | 'feeder_report' | 'unknown';
+
 export interface MedicalRecord {
   id: string;
+  source?: RecordSource;
+  /** Veterinary Council registration number, as Schedule III asks. */
+  vet_reg_no?: string;
   record_type: 'vaccination' | 'checkup' | 'treatment' | 'injury' | 'surgery' | 'deworming';
   title: string;
   description: string;
@@ -62,6 +73,11 @@ export interface Animal {
   observation?: Observation;
   /** Zone-level history, newest first. See lib/sightings.ts. */
   sightings?: Sighting[];
+  /**
+   * Identifiers in other systems. pawfriend_uid is the QR-collar id the
+   * campus/BMC programme uses (paw_xxxxxxxxx); we link out and never import.
+   */
+  external_ids?: { pawfriend_uid?: string };
 }
 
 export const demoAnimals: Animal[] = [

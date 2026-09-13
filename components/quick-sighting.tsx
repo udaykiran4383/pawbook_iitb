@@ -41,6 +41,13 @@ export default function QuickSighting({ animalId, animalName, homeZone }: QuickS
     setDone(true);
   };
 
+  // Presence needs absence: "I looked at the usual spot and they weren't there"
+  // is the only thing that makes "not seen in 11 days" mean anything.
+  const notThere = () => {
+    useAnimalStore.getState().logAbsence(animalId, zone);
+    setDone(true);
+  };
+
   if (done) {
     return (
       <div className="mt-6 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-center">
@@ -75,6 +82,13 @@ export default function QuickSighting({ animalId, animalName, homeZone }: QuickS
           Log sighting
         </button>
       </div>
+      <button
+        type="button"
+        onClick={notThere}
+        className="mt-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+      >
+        I looked here and they weren&apos;t around
+      </button>
       {/* Suggestions only; free text is still allowed. */}
       <datalist id="pawbook-zones">
         {campus.zones.map((z) => <option key={z} value={z} />)}

@@ -15,7 +15,12 @@
 
 import type { Animal } from './demo-data';
 
-export type SightingKind = 'seen' | 'fed' | 'treated' | 'sheltered' | 'observation' | 'emergency';
+/**
+ * `not_found` is the presence/absence signal: "I looked at the usual spot and
+ * they were not there." It is what makes "not seen in 11 days" trustworthy —
+ * without it, silence means nobody looked, not that nobody saw.
+ */
+export type SightingKind = 'seen' | 'fed' | 'treated' | 'sheltered' | 'observation' | 'emergency' | 'not_found';
 
 export interface Sighting {
   id: string;
@@ -73,6 +78,8 @@ export function zoneSummary(sightings: unknown, limit = 3): ZoneShare[] {
 
   const byZone = new Map<string, { count: number; lastAt: string }>();
   for (const s of list) {
+    // An absence says where someone looked, not where the animal was.
+    if (s?.kind === 'not_found') continue;
     const key = (s?.zone ?? '').trim();
     if (!key) continue;
     const cur = byZone.get(key);
@@ -99,6 +106,11 @@ export function describeRange(sightings: unknown): string {
   const others = rest.filter((z) => z.share >= 0.15).map((z) => z.zone);
   if (others.length) parts.push(`sometimes ${others.join(' or ')}`);
   return parts.join(' · ');
+}
+
+/** How many times someone looked and did not find them, most recent first. */
+export function absencesOf(animal: Pick<Animal, 'sightings'>): Sighting[] {
+  return sightingsOf(animal).filter((s) => s.kind === 'not_found');
 }
 
 /** Sightings for an animal, tolerant of records that predate the feature. */
