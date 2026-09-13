@@ -17,6 +17,8 @@ import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memo
 import ObservationForm from '@/components/observation-form';
 import { LIFECYCLE, suggestedLifecycle } from '@/lib/lifecycle';
 import WhereTheyveBeen from '@/components/where-theyve-been';
+import { tenureLine } from '@/lib/life-story';
+import LifeStory from '@/components/life-story';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -40,6 +42,11 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   // The question someone picked to answer, used as the placeholder so the box
   // stops being blank. Not saved — the memory should stand on its own.
   const [memoryPrompt, setMemoryPrompt] = useState<string | null>(null);
+  const [memoryPhoto, setMemoryPhoto] = useState<string | null>(null);
+  const [memoryPhotoBusy, setMemoryPhotoBusy] = useState(false);
+  const memoryPhotoRef = useRef<HTMLInputElement>(null);
+  const [memoryFilter, setMemoryFilter] = useState<'all' | StudentMemory['memory_type']>('all');
+  const [memoryView, setMemoryView] = useState<'list' | 'story'>('list');
   const [showMedicalForm, setShowMedicalForm] = useState(false);
   const [newMedicalRecord, setNewMedicalRecord] = useState<Partial<MedicalRecord>>({});
 
@@ -93,17 +100,35 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
     setNewComment('');
   };
 
+  const handleMemoryPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMemoryPhotoBusy(true);
+    try {
+      setMemoryPhoto(await uploadImageToCloudinary(file, 'pawbook/memories'));
+    } catch {
+      // Upload failures should not lose the text someone has typed.
+      setMemoryPhoto(null);
+    } finally {
+      setMemoryPhotoBusy(false);
+      if (memoryPhotoRef.current) memoryPhotoRef.current.value = '';
+    }
+  };
+
   const handleShareMemory = () => {
     if (!memoryForm.text.trim()) return;
     useAnimalStore.getState().addMemory(animal.id, {
       id: `m_${Date.now()}`,
       author: getUserName(),
       text: memoryForm.text,
+      // photo_url has been on the type since the start; the form never offered it.
+      photo_url: memoryPhoto ?? undefined,
       timestamp: new Date().toISOString(),
       likes: 0,
       memory_type: memoryForm.memory_type,
     });
     setMemoryForm({ text: '', memory_type: 'happy' });
+    setMemoryPhoto(null);
     setShowMemoryForm(false);
   };
 
@@ -345,7 +370,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
             <div className="space-y-4">
               <button
                 onClick={() => galleryInputRef.current?.click()}
-                className="w-full bg-gradient-to-r from-pink-50 to-orange-50 hover:from-pink-100 hover:to-orange-100 active:scale-[0.98] border-2 border-dashed border-pink-300 rounded-2xl py-6 text-foreground font-bold flex flex-col items-center gap-2 transition"
+                className="on-tint w-full bg-gradient-to-r from-pink-50 to-orange-50 hover:from-pink-100 hover:to-orange-100 active:scale-[0.98] border-2 border-dashed border-pink-300 rounded-2xl py-6 text-foreground font-bold flex flex-col items-center gap-2 transition"
               >
                 <Camera size={28} className="text-pink-400" />
                 <span>Upload Photo (Camera / Gallery)</span>
@@ -454,6 +479,26 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                       }))
                     }
                   />
+                  <div className="flex items-center gap-2">
+                    <input ref={memoryPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleMemoryPhoto} />
+                    <button
+                      type="button"
+                      onClick={() => memoryPhotoRef.current?.click()}
+                      disabled={memoryPhotoBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 rounded-full px-3 py-1.5 hover:bg-purple-50 dark:hover:bg-purple-950/40 active:scale-95 transition disabled:opacity-60"
+                    >
+                      <Camera size={14} />
+                      {memoryPhotoBusy ? 'Uploading…' : memoryPhoto ? 'Change photo' : 'Add a photo'}
+                    </button>
+                    {memoryPhoto && (
+                      <>
+                        <img src={memoryPhoto} alt="" className="w-10 h-10 rounded-lg object-cover border border-purple-200" />
+                        <button type="button" onClick={() => setMemoryPhoto(null)} className="text-xs text-muted-foreground hover:text-foreground">
+                          remove
+                        </button>
+                      </>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => setShowMemoryForm(false)} className="flex-1 border border-purple-300 text-purple-700 font-bold py-2 rounded-lg hover:bg-purple-50 active:scale-95 transition text-sm">Cancel</button>
                     <button onClick={handleShareMemory} disabled={!memoryForm.text.trim()} className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded-lg active:scale-95 transition text-sm disabled:opacity-50">Share</button>
@@ -461,14 +506,58 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
                 </div>
               )}
 
-              {animal.memories.length === 0 ? (
+              {tenureLine(animal) && (
+                <p className="text-xs text-muted-foreground text-center italic">{tenureLine(animal)}</p>
+              )}
+
+              {animal.memories.length > 0 && (
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter memories">
+                    {(['all', 'happy', 'funny', 'touching', 'tribute', 'goodbye'] as const).map((k) => {
+                      const n = k === 'all' ? animal.memories.length : animal.memories.filter((m) => m.memory_type === k).length;
+                      if (k !== 'all' && n === 0) return null;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setMemoryFilter(k)}
+                          aria-pressed={memoryFilter === k}
+                          className={`text-xs rounded-full px-2.5 py-1 border transition ${
+                            memoryFilter === k
+                              ? 'bg-purple-500 text-white border-purple-500'
+                              : 'bg-white dark:bg-card text-foreground border-purple-200 dark:border-border'
+                          }`}
+                        >
+                          {k === 'all' ? 'All' : memoryEmojis[k]} {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMemoryView((v) => (v === 'list' ? 'story' : 'list'))}
+                    className="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline"
+                  >
+                    {memoryView === 'list' ? '📖 Life story' : '☰ List'}
+                  </button>
+                </div>
+              )}
+
+              {memoryView === 'story' && animal.memories.length > 0 ? (
+                <LifeStory animal={animal} />
+              ) : animal.memories.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-3xl mb-2">💭</p>
                   <p className="text-sm text-muted-foreground">No memories shared yet. Be the first!</p>
                 </div>
               ) : (
-                animal.memories.map(memory => (
+                animal.memories
+                  .filter((m) => memoryFilter === 'all' || m.memory_type === memoryFilter)
+                  .map(memory => (
                   <div key={memory.id} className="bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                    {memory.photo_url && (
+                      <img src={optimizeImageUrl(memory.photo_url, { width: 600 })} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />
+                    )}
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{memoryEmojis[memory.memory_type] || '💭'}</span>
                       <span className="font-bold text-sm text-foreground">{memory.author}</span>

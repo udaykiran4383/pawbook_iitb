@@ -27,18 +27,19 @@ export interface Coverage {
 }
 
 function recordDate(record: any): number | null {
-  const raw = record?.date ?? record?.created_at;
+  const raw = record?.record_date ?? record?.date ?? record?.created_at;
   const parsed = raw ? Date.parse(raw) : NaN;
   return Number.isNaN(parsed) ? null : parsed;
 }
 
 function isSterilisation(record: any): boolean {
-  const text = `${record?.title ?? ''} ${record?.type ?? ''} ${record?.description ?? ''}`.toLowerCase();
+  const text = `${record?.title ?? ''} ${record?.type ?? ''} ${record?.record_type ?? ''} ${record?.description ?? ''}`.toLowerCase();
   return /steril|spay|neuter|castrat|\babc\b/.test(text);
 }
 
 function isRabiesVaccination(record: any): boolean {
-  const text = `${record?.title ?? ''} ${record?.type ?? ''} ${record?.description ?? ''}`.toLowerCase();
+  const text = `${record?.title ?? ''} ${record?.type ?? ''} ${record?.record_type ?? ''} ${record?.description ?? ''}`.toLowerCase();
+  // record_type 'vaccination' plus any mention of rabies is enough.
   return /rabies|anti-rabies|\barv\b/.test(text) && /vaccin|shot|dose|booster/.test(text);
 }
 

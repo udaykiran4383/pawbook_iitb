@@ -121,7 +121,7 @@ for (const a of animals) {
     counts.medical += 1;
     out.push(
       `INSERT INTO medical_records (animal_id, record_type, description, created_at)\n` +
-        `SELECT ${ref}, ${q(title)}, ${q(r.description)}, ${ts(r.date) === 'NULL' ? 'now()' : ts(r.date)}\n` +
+        `SELECT ${ref}, ${q(title)}, ${q(r.description)}, ${ts(r.record_date ?? r.date) === 'NULL' ? 'now()' : ts(r.record_date ?? r.date)}\n` +
         `WHERE NOT EXISTS (SELECT 1 FROM medical_records WHERE animal_id = ${ref} AND record_type = ${q(title)} AND description IS NOT DISTINCT FROM ${q(r.description)});`
     );
   }
