@@ -117,6 +117,26 @@ export function checkStatePayload(data: unknown): GuardResult {
     }
   }
 
+  const stations = (data as any)?.state?.stations;
+  if (stations !== undefined) {
+    if (!Array.isArray(stations)) return fail(400, 'state.stations must be an array');
+    if (stations.length > MAX_LIST_ITEMS) return fail(413, 'Too many feeding stations');
+    for (const station of stations) {
+      if (!station || typeof station !== 'object' || Array.isArray(station)) {
+        return fail(400, 'Each feeding station must be an object');
+      }
+      if (!station.id) return fail(400, 'Each feeding station needs an id');
+      // A feeding spot is a zone. A precise position for the place where
+      // animals gather twice a day is the one record this app must never hold.
+      if ('lat' in station || 'lng' in station || 'coords' in station || 'location_coords' in station) {
+        return fail(400, 'Feeding stations may not carry coordinates');
+      }
+      if (station.times !== undefined && station.times !== null && !Array.isArray(station.times)) {
+        return fail(400, 'times must be an array');
+      }
+    }
+  }
+
   return { ok: true };
 }
 

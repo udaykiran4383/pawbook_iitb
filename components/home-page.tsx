@@ -21,6 +21,7 @@ import CampusCensus from '@/components/campus-census';
 import { useCampus } from '@/components/campus-provider';
 import ExportRegister from '@/components/export-register';
 import CampusMap from '@/components/campus-map';
+import FeedingStations from '@/components/feeding-stations';
 
 export default function HomePage() {
   const { campus } = useCampus();
@@ -100,6 +101,8 @@ export default function HomePage() {
         <CampusCensus animals={animals} />
 
         <CampusMap animals={animals} onOpenProfile={setSelectedAnimal} />
+
+        <FeedingStations />
 
         <NeedsYouMost animals={activeAnimals} onOpenProfile={setSelectedAnimal} />
 

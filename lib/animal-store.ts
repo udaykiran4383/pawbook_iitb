@@ -3,6 +3,7 @@ import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { supabase } from './supabase-client';
 import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './demo-data';
 import type { EmergencyCase } from './emergency';
+import type { FeedingStation } from './feeding-stations';
 import type { Observation } from './survey';
 import { appendSighting, newSighting } from './sightings';
 import { DEFAULT_CAMPUS_SLUG, isCampusSlug, stateIdFor } from './campuses';
@@ -21,7 +22,7 @@ export function campusSlugFromLocation(): string {
 
 /** The persisted key currently in use; the realtime channel follows it. */
 export let activeStateId = stateIdFor(campusSlugFromLocation());
-import { getUserName } from './utils';
+import { getUserName } from './identity';
 
 interface AnimalStore {
   animals: Animal[];
@@ -30,6 +31,16 @@ interface AnimalStore {
   addEmergency: (report: EmergencyCase) => void;
   respondToEmergency: (id: string, responder: string) => void;
   resolveEmergency: (id: string) => void;
+  /** Designated feeding spots. Same row, so one phone's "stocked" is everyone's. */
+  stations: FeedingStation[];
+  addStation: (station: FeedingStation) => void;
+  /** "I put food out": clears any needs-food flag. */
+  stockStation: (id: string) => void;
+  /** "I cleaned the spot": the rule that keeps feeding permitted. */
+  clearStation: (id: string) => void;
+  /** "I walked past and the bowl was empty." */
+  flagStationNeedsFood: (id: string) => void;
+  setStationActive: (id: string, active: boolean) => void;
   setAnimals: (animals: Animal[]) => void;
   addAnimal: (animal: Animal) => void;
   updateAnimal: (id: number, data: Partial<Animal>) => void;
@@ -105,6 +116,32 @@ export const useAnimalStore = create<AnimalStore>()(
       resolveEmergency: (id) => set((state) => ({
         emergencies: (Array.isArray(state.emergencies) ? state.emergencies : []).map((c) =>
           c.id === id ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c,
+        ),
+      })),
+      stations: [],
+      addStation: (station) => set((state) => ({
+        stations: [...(Array.isArray(state.stations) ? state.stations : []), station],
+      })),
+      stockStation: (id) => set((state) => ({
+        stations: (Array.isArray(state.stations) ? state.stations : []).map((s) =>
+          s.id === id
+            ? { ...s, last_stocked_at: new Date().toISOString(), last_stocked_by: getUserName(), needs_food: false }
+            : s,
+        ),
+      })),
+      clearStation: (id) => set((state) => ({
+        stations: (Array.isArray(state.stations) ? state.stations : []).map((s) =>
+          s.id === id ? { ...s, last_cleared_at: new Date().toISOString() } : s,
+        ),
+      })),
+      flagStationNeedsFood: (id) => set((state) => ({
+        stations: (Array.isArray(state.stations) ? state.stations : []).map((s) =>
+          s.id === id ? { ...s, needs_food: true, needs_food_at: new Date().toISOString() } : s,
+        ),
+      })),
+      setStationActive: (id, active) => set((state) => ({
+        stations: (Array.isArray(state.stations) ? state.stations : []).map((s) =>
+          s.id === id ? { ...s, active, updated_at: new Date().toISOString() } : s,
         ),
       })),
       setAnimals: (animals) => set({ animals: sanitizeAnimals(animals) }),
@@ -265,6 +302,7 @@ export const useAnimalStore = create<AnimalStore>()(
           ...state,
           animals: sanitizeAnimals(state?.animals),
           emergencies: Array.isArray(state?.emergencies) ? state.emergencies : [],
+          stations: Array.isArray(state?.stations) ? state.stations : [],
         };
       },
     }
@@ -331,7 +369,7 @@ export function switchCampusStore(slug: string) {
   activeStateId = name;
   const persist = (useAnimalStore as any).persist;
   persist?.setOptions?.({ name });
-  useAnimalStore.setState({ animals: [], emergencies: [] });
+  useAnimalStore.setState({ animals: [], emergencies: [], stations: [] });
   void persist?.rehydrate?.();
   subscribeRealtime(name);
 }
