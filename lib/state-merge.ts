@@ -122,6 +122,19 @@ export function mergeAnimal(current: Json, incoming: Json): Json {
   out.medical_records = unionById(current?.medical_records, incoming?.medical_records);
   out.gallery = unionById(current?.gallery, incoming?.gallery);
 
+  // A survey observation is one coherent snapshot; the newer snapshot wins
+  // whole rather than field-by-field, so sex from one visit cannot be paired
+  // with a body condition from another.
+  if (current?.observation || incoming?.observation) {
+    const newer = newerTimestamp(current?.observation?.observed_at, incoming?.observation?.observed_at);
+    out.observation =
+      newer === undefined
+        ? incoming?.observation ?? current?.observation
+        : newer === incoming?.observation?.observed_at
+          ? incoming.observation
+          : current.observation;
+  }
+
   // Care timestamps: newest wins, each with the name attached to it.
   mergeTimestampPair(out, current, incoming, 'last_seen', 'last_seen_by');
   mergeTimestampPair(out, current, incoming, 'last_fed', 'last_fed_by');

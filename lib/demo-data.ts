@@ -28,6 +28,8 @@ export interface MedicalRecord {
   next_due?: string;
 }
 
+import type { Observation } from './survey';
+
 export interface Animal {
   id: number;
   name: string;
@@ -55,6 +57,8 @@ export interface Animal {
   likes: number;
   death_date?: string;
   death_note?: string;
+  /** Survey-standard field observation. See lib/survey.ts. */
+  observation?: Observation;
 }
 
 export const demoAnimals: Animal[] = [

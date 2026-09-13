@@ -14,6 +14,7 @@ import CareTracker from '@/components/care-tracker';
 import TrustBadge from '@/components/trust-badge';
 import DictateButton from '@/components/dictate-button';
 import { getMemoryPrompts, defaultMemoryKind, type MemoryKind } from '@/lib/memory-prompts';
+import ObservationForm from '@/components/observation-form';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -536,6 +537,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
               <p className="text-sm text-muted-foreground text-center">
                 Care events are logged when students record feeding, sightings, and medical care.
               </p>
+              <ObservationForm animalId={animal.id} current={animal.observation} />
               <CareTracker animalId={animal.id} />
             </div>
           )}

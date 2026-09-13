@@ -3,6 +3,7 @@ import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { supabase } from './supabase-client';
 import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './demo-data';
 import type { EmergencyCase } from './emergency';
+import type { Observation } from './survey';
 import { getUserName } from './utils';
 
 interface AnimalStore {
@@ -21,6 +22,8 @@ interface AnimalStore {
   likeMemory: (animalId: number, memoryId: string) => void;
   addMedicalRecord: (animalId: number, record: MedicalRecord) => void;
   logCareAction: (animalId: number, actionType: 'seen' | 'fed' | 'treated' | 'sheltered') => void;
+  /** Merge survey fields into the animal; also counts as a sighting. */
+  recordObservation: (animalId: number, observation: Observation) => void;
 }
 
 function sanitizeAnimals(input: unknown): Animal[] {
@@ -103,6 +106,21 @@ export const useAnimalStore = create<AnimalStore>()(
       addMedicalRecord: (animalId, record) => set((state) => ({
         animals: sanitizeAnimals(state.animals.map((a) => a.id === animalId ? { ...a, medical_records: [record, ...(Array.isArray(a.medical_records) ? a.medical_records : [])] } : a))
       })),
+      recordObservation: (animalId, observation) => set((state) => {
+        const now = new Date().toISOString();
+        return {
+          animals: sanitizeAnimals(state.animals.map((a) => {
+            if (a.id !== animalId) return a;
+            return {
+              ...a,
+              observation: { ...(a.observation ?? {}), ...observation, observed_at: now },
+              // Filling in the survey means you are looking at the animal.
+              last_seen: now,
+              last_seen_by: getUserName(),
+            };
+          })),
+        };
+      }),
       logCareAction: (animalId, actionType) => set((state) => {
         const now = new Date().toISOString();
         const userName = getUserName();

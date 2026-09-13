@@ -10,6 +10,7 @@ import { uploadImageToCloudinary } from '@/lib/upload-image';
 import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { animalPath } from '@/lib/animal-slug';
 import { optimizeImageUrl } from '@/lib/image-url';
+import { getPresence } from '@/lib/presence';
 
 // Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
 
@@ -41,7 +42,13 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
     : bgGradients[animal.id % bgGradients.length];
 
   const now = Date.now();
-  const isSeenUrgent = !isDeceased && now - new Date(animal.last_seen).getTime() > 12 * 60 * 60 * 1000;
+  // "Not seen for 12 hours" was treated as urgent, which on a campus where the
+  // app tracks a handful of ~250 dogs is mostly nobody having opened the app.
+  // Presence uses fortnight / six-week thresholds instead; feeding keeps the
+  // short window because a missed meal is a same-day matter.
+  const presence = getPresence(animal, now);
+  const isSeenUrgent = presence.state === 'unseen';
+  const isSeenFading = presence.state === 'fading';
   const isFedUrgent = !isDeceased && now - new Date(animal.last_fed).getTime() > 12 * 60 * 60 * 1000;
 
   const handleLike = () => {
@@ -174,12 +181,19 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
       {/* Last Seen & Last Fed — for active animals */}
       {!isDeceased && (
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className={`bg-white/70 dark:bg-card p-2.5 rounded-xl text-center border-2 ${isSeenUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
+          <div className={`bg-white/70 dark:bg-card p-2.5 rounded-xl text-center border-2 ${
+            isSeenUrgent ? 'border-red-400 bg-red-50 dark:bg-red-950/30' : isSeenFading ? 'border-amber-300' : 'border-transparent'
+          }`}>
             <p className="text-lg">👀</p>
             <p className="text-xs font-bold text-foreground">Last seen</p>
-            <p className={`text-xs font-semibold ${isSeenUrgent ? 'text-red-600' : 'text-muted-foreground'}`} suppressHydrationWarning>
-              {formatTimeSince(new Date(animal.last_seen))} by {lastSeenBy}
+            <p className={`text-xs font-semibold ${
+              isSeenUrgent ? 'text-red-600 dark:text-red-400' : isSeenFading ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'
+            }`} suppressHydrationWarning>
+              {presence.state === 'unknown' ? presence.label : `${formatTimeSince(new Date(animal.last_seen))} by ${lastSeenBy}`}
             </p>
+            {isSeenUrgent && (
+              <p className="text-[10px] text-red-700 dark:text-red-400 mt-0.5">is everything alright?</p>
+            )}
           </div>
           <div className={`bg-white/70 dark:bg-card p-2.5 rounded-xl text-center border-2 ${isFedUrgent ? 'border-red-400 bg-red-50' : 'border-transparent'}`}>
             <p className="text-lg">🍲</p>

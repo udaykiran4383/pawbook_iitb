@@ -15,6 +15,8 @@ import type { Animal } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import SiteHero from '@/components/site-hero';
 import NeedsYouMost from '@/components/needs-you-most';
+import { getPresence } from '@/lib/presence';
+import { needsAttention } from '@/lib/survey';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -50,9 +52,14 @@ export default function Home() {
   const urgentAnimals = useMemo(() => {
     const now = Date.now();
     return activeAnimals.filter(a => {
-      const msSinceSeen = now - new Date(a.last_seen).getTime();
+      // A missed meal is a same-day matter. "Not seen" is not: on a campus of
+      // ~250 dogs where the app tracks a handful, twelve quiet hours almost
+      // always means nobody opened the app. Six weeks is a real question.
       const msSinceFed = now - new Date(a.last_fed).getTime();
-      return msSinceSeen > 12 * 60 * 60 * 1000 || msSinceFed > 12 * 60 * 60 * 1000;
+      const unseen = getPresence(a, now).state === 'unseen';
+      // Someone ticked "visible wound" or "thin" on the survey card.
+      const flagged = needsAttention(a.observation);
+      return msSinceFed > 12 * 60 * 60 * 1000 || unseen || flagged;
     });
   }, [activeAnimals]);
 
@@ -95,7 +102,7 @@ export default function Home() {
               <div>
                 <p className="font-bold text-sm">🚨 Urgent Care Needed!</p>
                 <p className="text-xs mt-0.5 leading-relaxed">
-                  {urgentAnimals.length} animal{urgentAnimals.length > 1 ? 's' : ''} haven't been seen or fed in over 12 hours: <strong>{urgentAnimals.map(a => a.name).join(', ')}</strong>. If you are on campus, please check on them!
+                  {urgentAnimals.length} animal{urgentAnimals.length > 1 ? 's' : ''} need a check — missed a meal, not seen in weeks, or flagged on a survey: <strong>{urgentAnimals.map(a => a.name).join(', ')}</strong>. If you are on campus, please check on them!
                 </p>
               </div>
             </div>
