@@ -27,41 +27,78 @@ export interface MapZone {
   /** Words that map an animal's free-text location onto this zone. */
   aliases: string[];
   tint: string;
+  /**
+   * Approximate real-world centre and radius (metres) for the geographic view.
+   * Approximate on purpose: animals are scattered inside this circle, never
+   * placed at a measured point. Missing means the zone only appears on the
+   * sketch.
+   */
+  geo?: { lat: number; lng: number; radius: number };
 }
 
 export interface MapLayout {
   zones: MapZone[];
+  /** Where the geographic view opens. */
+  center?: { lat: number; lng: number; zoom: number };
   /** Optional decorative features: the lake, roads. */
   lake?: { path: string };
   roads?: string[];
   caption: string;
 }
 
-/** IIT Bombay, Powai. Schematic — north is roughly up, nothing is to scale. */
+/**
+ * Project a real position onto the 1000×745 sketch so the sketch and the
+ * street map agree about where things are. Linear is fine at campus scale.
+ */
+const SKETCH = { west: 72.9025, east: 72.9215, north: 19.1395, south: 19.1225 };
+function project(lat: number, lng: number): { cx: number; cy: number } {
+  return {
+    cx: 60 + ((lng - SKETCH.west) / (SKETCH.east - SKETCH.west)) * 880,
+    cy: 50 + ((SKETCH.north - lat) / (SKETCH.north - SKETCH.south)) * 640,
+  };
+}
+
+/**
+ * IIT Bombay, Powai. Zone centres come from OpenStreetMap features (hostels,
+ * gates, the library, the gymkhana, the boathouse), averaged per cluster and
+ * then rounded — the app never needs, and deliberately does not keep, anything
+ * more precise than "around here". North is up. Powai Lake is to the west and
+ * south-west of the campus; Hillside is the ridge on the east.
+ */
+function zone(
+  id: string, label: string, lat: number, lng: number, radius: number,
+  aliases: string[], tint: string, sketchRx: number, sketchRy: number,
+): MapZone {
+  return { id, label, ...project(lat, lng), rx: sketchRx, ry: sketchRy, aliases, tint, geo: { lat, lng, radius } };
+}
+
 const IITB: MapLayout = {
   caption: 'IIT Bombay, roughly. Not to scale, and not where anyone sleeps — just the areas they are known by.',
+  center: { lat: 19.1325, lng: 72.9125, zoom: 15.1 },
   lake: {
-    // Powai Lake wraps the campus's east and south-east.
-    path: 'M 760 120 C 900 100, 990 220, 985 380 C 980 540, 900 690, 760 695 C 700 698, 690 600, 720 520 C 745 450, 700 380, 730 300 C 750 240, 720 160, 760 120 Z',
+    // Powai Lake, along the west and south-west edge. Drawn, not surveyed.
+    path: 'M 40 300 C 120 260, 200 330, 230 420 C 260 520, 200 600, 260 700 L 40 720 Z',
   },
   roads: [
-    'M 500 690 C 500 600, 480 520, 500 440 C 520 360, 500 260, 520 160',
-    'M 120 420 C 260 400, 380 430, 500 440 C 620 450, 660 400, 710 330',
-    'M 180 250 C 300 230, 420 250, 520 160',
+    // Main Gate Road, south gate curving north-west through the hostels.
+    'M 700 700 C 660 560, 560 480, 470 420 C 380 360, 260 300, 200 250',
+    // Hostel Road along the north.
+    'M 300 190 C 420 175, 540 170, 640 165',
   ],
   zones: [
-    { id: 'main-gate', label: 'Main Gate', cx: 500, cy: 640, rx: 70, ry: 30, aliases: ['main gate', 'gate'], tint: '#FFE3C2' },
-    { id: 'yp-gate', label: 'YP Gate', cx: 560, cy: 80, rx: 60, ry: 28, aliases: ['yp gate', 'y point', 'y-point'], tint: '#FFE3C2' },
-    { id: 'academic', label: 'Library & Academic Area', cx: 500, cy: 350, rx: 120, ry: 70, aliases: ['library', 'ee', 'electrical', 'department', 'dept', 'admin', 'main building', 'academic', 'lecture', 'lhc', 'convocation'], tint: '#CFE6FF' },
-    { id: 'canteen', label: 'Canteen Area', cx: 620, cy: 440, rx: 60, ry: 34, aliases: ['canteen', 'mess', 'gulmohar', 'cafe'], tint: '#FFD9E2' },
-    { id: 'sports', label: 'Sports Complex', cx: 300, cy: 500, rx: 90, ry: 50, aliases: ['sports', 'gymkhana', 'ground', 'swimming', 'basketball', 'football', 'stadium'], tint: '#C9F0DC' },
-    { id: 'h1-4', label: 'H1 – H4', cx: 250, cy: 610, rx: 90, ry: 42, aliases: ['h1', 'h2', 'h3', 'h4', 'hostel 1', 'hostel 2', 'hostel 3', 'hostel 4'], tint: '#E7DBFF' },
-    { id: 'h5-8', label: 'H5 – H8', cx: 130, cy: 460, rx: 80, ry: 48, aliases: ['h5', 'h6', 'h7', 'h8', 'hostel 5', 'hostel 6', 'hostel 7', 'hostel 8'], tint: '#E7DBFF' },
-    { id: 'h9-11', label: 'H9 – H11', cx: 150, cy: 300, rx: 80, ry: 48, aliases: ['h9', 'h10', 'h11', 'hostel 9', 'hostel 10', 'hostel 11'], tint: '#E7DBFF' },
-    { id: 'h12-16', label: 'H12 – H16', cx: 320, cy: 150, rx: 110, ry: 50, aliases: ['h12', 'h13', 'h14', 'h15', 'h16', 'hostel 12', 'hostel 13', 'hostel 14', 'hostel 15', 'hostel 16'], tint: '#E7DBFF' },
-    { id: 'h21', label: 'H21 (Tansa)', cx: 640, cy: 200, rx: 60, ry: 36, aliases: ['h21', 'hostel 21', 'tansa'], tint: '#E7DBFF' },
-    { id: 'hillside', label: 'Hillside', cx: 90, cy: 150, rx: 70, ry: 60, aliases: ['hill', 'hillside', 'forest', 'quarry'], tint: '#DDEFD3' },
-    { id: 'lakeside', label: 'Lakeside', cx: 700, cy: 560, rx: 55, ry: 60, aliases: ['lake', 'powai', 'boat club', 'lakeside'], tint: '#DDEFD3' },
+    zone('yp-gate', 'YP Gate', 19.1284, 72.9192, 90, ['yp gate', 'y point', 'y-point', 'market gate'], '#FFE3C2', 55, 26),
+    zone('main-gate', 'Main Gate', 19.1256, 72.9163, 90, ['main gate', 'gate'], '#FFE3C2', 65, 28),
+    zone('academic', 'Library & Academic Area', 19.1325, 72.9158, 220, ['library', 'ee', 'electrical', 'department', 'dept', 'admin', 'main building', 'academic', 'lecture', 'lhc', 'convocation', 'infinite corridor'], '#CFE6FF', 110, 62),
+    zone('canteen', 'Gulmohar & Canteens', 19.1298, 72.9151, 80, ['canteen', 'mess', 'gulmohar', 'cafe'], '#FFD9E2', 60, 30),
+    zone('sports', 'Gymkhana & Grounds', 19.1346, 72.9124, 120, ['sports', 'gymkhana', 'ground', 'swimming', 'basketball', 'football', 'stadium'], '#C9F0DC', 75, 40),
+    zone('h1-4', 'H1 – H4 · Tansa', 19.1367, 72.9120, 160, ['h1', 'h2', 'h3', 'h4', 'hostel 1', 'hostel 2', 'hostel 3', 'hostel 4', 'tansa'], '#E7DBFF', 95, 40),
+    zone('h5-9', 'H5 · H6 · H9', 19.1353, 72.9082, 160, ['h5', 'h6', 'h9', 'hostel 5', 'hostel 6', 'hostel 9'], '#E7DBFF', 90, 42),
+    zone('h7-21', 'H7 · H8 · H11 · H21', 19.1333, 72.9114, 130, ['h7', 'h8', 'h11', 'h21', 'hostel 7', 'hostel 8', 'hostel 11', 'hostel 21'], '#E7DBFF', 95, 40),
+    zone('h12-14', 'H12 – H14', 19.1350, 72.9052, 150, ['h12', 'h13', 'h14', 'hostel 12', 'hostel 13', 'hostel 14'], '#E7DBFF', 85, 42),
+    zone('h15-16', 'H15 · H16', 19.1378, 72.9134, 110, ['h15', 'h16', 'hostel 15', 'hostel 16'], '#E7DBFF', 70, 32),
+    zone('h10', 'H10', 19.1289, 72.9158, 90, ['h10', 'hostel 10'], '#E7DBFF', 50, 28),
+    zone('hillside', 'Hillside', 19.1345, 72.9185, 140, ['hill', 'hillside', 'forest', 'quarry'], '#DDEFD3', 70, 60),
+    zone('lakeside', 'Lakeside & Boathouse', 19.1290, 72.9105, 150, ['lake', 'powai', 'boat', 'boathouse', 'lakeside'], '#DDEFD3', 75, 55),
   ],
 };
 

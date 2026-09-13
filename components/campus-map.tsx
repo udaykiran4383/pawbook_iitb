@@ -1,11 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Map as MapIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Animal } from '@/lib/demo-data';
 import { getMapLayout, scatter, zoneFor, type MapZone } from '@/lib/campus-map';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { getPresence } from '@/lib/presence';
+
+// MapLibre reads `window` on import; load it only on the client, only when shown.
+const GeoCampusMap = dynamic(() => import('@/components/geo-campus-map'), {
+  ssr: false,
+  loading: () => <div className="h-[520px] rounded-3xl bg-muted animate-pulse" aria-hidden="true" />,
+});
 
 interface CampusMapProps {
   animals: Animal[];
@@ -21,7 +28,9 @@ interface CampusMapProps {
  */
 export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
   const [open, setOpen] = useState(true);
+  const [view, setView] = useState<'sketch' | 'geo'>('sketch');
   const layout = useMemo(() => getMapLayout(), []);
+  const hasGeo = layout.zones.some((z) => z.geo);
 
   const placed = useMemo(() => {
     const byZone = new Map<string, Animal[]>();
@@ -58,7 +67,27 @@ export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
           {open ? <ChevronUp size={20} className="text-muted-foreground" /> : <ChevronDown size={20} className="text-muted-foreground" />}
         </button>
 
-        {open && (
+        {open && hasGeo && (
+          <div className="flex gap-1.5 mb-2" role="group" aria-label="Map style">
+            {(['sketch', 'geo'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={`text-xs font-bold rounded-full px-3 py-1.5 border transition ${
+                  view === v ? 'bg-foreground text-background border-foreground' : 'bg-card text-foreground border-border'
+                }`}
+              >
+                {v === 'sketch' ? '✏️ Sketch' : '🗺️ Real map'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {open && view === 'geo' && <GeoCampusMap animals={animals} onOpenProfile={onOpenProfile} />}
+
+        {open && view === 'sketch' && (
           <div className="on-tint bg-[#FFF8EE] rounded-3xl border-2 border-amber-200 shadow-sm overflow-hidden">
             <svg
               viewBox="0 0 1000 745"
