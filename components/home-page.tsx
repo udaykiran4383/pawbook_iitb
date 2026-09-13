@@ -15,6 +15,7 @@ import type { Animal } from '@/lib/demo-data';
 import { useAnimalStore } from '@/lib/animal-store';
 import SiteHero from '@/components/site-hero';
 import NeedsYouMost from '@/components/needs-you-most';
+import FollowUpPrompt from '@/components/follow-up-prompt';
 import { getPresence } from '@/lib/presence';
 import { needsAttention } from '@/lib/survey';
 import CampusCensus from '@/components/campus-census';
@@ -102,6 +103,8 @@ export default function HomePage() {
         <CampusMap animals={animals} onOpenProfile={setSelectedAnimal} />
 
         <NeedsYouMost animals={activeAnimals} onOpenProfile={setSelectedAnimal} />
+
+        <FollowUpPrompt />
 
         {/* Notifications */}
         {urgentAnimals.length > 0 && (

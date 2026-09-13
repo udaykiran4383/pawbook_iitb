@@ -5,6 +5,7 @@ import { Loader } from 'lucide-react';
 import { formatTimeSince, eventDescriptions, CareEventType } from '@/lib/care-tracking';
 import { getDisplayActorName } from '@/lib/utils';
 import { useAnimalStore } from '@/lib/animal-store';
+import { rememberMySighting } from '@/lib/follow-up';
 
 interface CareTrackerProps {
   animalId: number;
@@ -68,6 +69,8 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
       // every other student's view. It used to be a setState plus a 400ms
       // setTimeout, which meant last_fed never actually changed.
       useAnimalStore.getState().logCareAction(animalId, eventType as 'seen' | 'fed' | 'treated' | 'sheltered');
+      // So this phone can be asked "still around?" in a week or so.
+      rememberMySighting(animalId);
       // A blocking alert() interrupts the person mid-flow and, on mobile, hides
       // the very timeline they just added to.
       // Feeders tend to stop at feeding. Feeding time is the best moment to notice

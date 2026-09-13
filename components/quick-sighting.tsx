@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Eye, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
 import { useCampus } from '@/components/campus-provider';
+import { rememberMySighting } from '@/lib/follow-up';
 
 interface QuickSightingProps {
   animalId: number;
@@ -39,6 +40,8 @@ export default function QuickSighting({ animalId, animalName, homeZone }: QuickS
 
   const submit = () => {
     useAnimalStore.getState().logSighting(animalId, zone);
+    // So this phone can be asked "still around?" in a week or so.
+    rememberMySighting(animalId);
     setDone(true);
   };
 
