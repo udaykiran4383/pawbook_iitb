@@ -15,6 +15,8 @@
  * (scripts/02-enhanced-schema.sql already defines them) remove the need for it.
  */
 
+import { isClosed, newestStatusUpdate, statusOf, type EmergencyUpdate } from './emergency';
+
 type Json = Record<string, any>;
 
 /** Newest of two ISO timestamps; tolerates missing or unparseable values. */
@@ -74,9 +76,15 @@ function unionById<T>(current: unknown, incoming: unknown, onCollide?: (a: T, b:
 
 /**
  * Emergency reports converge the same way animals do: a report present on one
- * side only is kept, resolution is monotonic (once someone marks it handled it
- * stays handled), and responders are unioned so two people volunteering at the
- * same moment do not erase each other.
+ * side only is kept, and responders are unioned so two people volunteering at
+ * the same moment do not erase each other.
+ *
+ * Status follows the thread. Updates are unioned by id, and the report is in
+ * whatever state the newest status-bearing update put it in — so a reopen
+ * filed after a resolve wins even when the resolve arrives second, which is the
+ * whole point of letting people reopen. Only rows from before the thread
+ * existed, with no updates on either side, keep the old rule that resolution
+ * is monotonic; for them there is nothing else to go on.
  */
 function mergeEmergency(a: Json, b: Json): Json {
   const responders = Array.from(
@@ -85,14 +93,40 @@ function mergeEmergency(a: Json, b: Json): Json {
       ...(Array.isArray(b?.responders) ? b.responders : []),
     ]),
   );
-  const resolved = Boolean(a?.resolved) || Boolean(b?.resolved);
-  return {
-    ...a,
-    ...b,
-    responders,
-    resolved,
-    resolved_at: newerTimestamp(a?.resolved_at, b?.resolved_at) ?? undefined,
-  };
+  const hasThread = a?.updates !== undefined || b?.updates !== undefined;
+  const hasStatus = a?.status !== undefined || b?.status !== undefined;
+
+  if (!hasThread && !hasStatus) {
+    const resolved = Boolean(a?.resolved) || Boolean(b?.resolved);
+    return {
+      ...a,
+      ...b,
+      responders,
+      resolved,
+      resolved_at: newerTimestamp(a?.resolved_at, b?.resolved_at) ?? undefined,
+    };
+  }
+
+  const updates = unionById<EmergencyUpdate>(a?.updates, b?.updates);
+  const latest = newestStatusUpdate(updates);
+  let status = latest?.status;
+  if (status === undefined) {
+    // Neither side's thread changed status, so fall back to the fields
+    // themselves, keeping a closed state over an open one as before.
+    const sa = statusOf(a);
+    const sb = statusOf(b);
+    status = isClosed(sb) ? sb : isClosed(sa) ? sa : b?.status !== undefined ? sb : sa;
+  }
+  const closed = isClosed(status);
+
+  const out: Json = { ...a, ...b, responders, status, resolved: closed };
+  if (hasThread) out.updates = updates;
+  if (closed) {
+    out.resolved_at = latest?.at ?? newerTimestamp(a?.resolved_at, b?.resolved_at) ?? undefined;
+  } else {
+    delete out.resolved_at;
+  }
+  return out;
 }
 
 /**
