@@ -45,7 +45,7 @@ const RULES = [
   },
   {
     title: 'If someone is hurt',
-    body: 'File an emergency report in PawBook and say where. Do not try to lift or restrain an injured animal on your own. If you are bitten or scratched: wash the wound under running water with soap for fifteen minutes, then go to a hospital the same day — no exceptions, however small it looks.',
+    body: 'File an emergency report in PawBook and say where. Do not try to lift or restrain an injured animal on your own. If you are bitten or scratched: wash the wound under running water with soap for fifteen minutes, then go to a hospital the same day — no exceptions, however small it looks. The full steps, in Hindi and Marathi too, are at /bite.',
   },
   {
     title: 'Keep the animals out of the record',

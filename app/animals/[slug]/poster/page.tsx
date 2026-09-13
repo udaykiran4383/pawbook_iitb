@@ -143,7 +143,7 @@ export default async function PosterPage({ params }: PageProps) {
               )}
               <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
                 Wash any bite or scratch with soap under running water for 15 minutes and go to a
-                hospital the same day.
+                hospital the same day. Full steps: {siteOrigin()}/bite
               </p>
             </div>
           </article>
