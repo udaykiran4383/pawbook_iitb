@@ -70,7 +70,13 @@ export default function CareTracker({ animalId }: CareTrackerProps) {
       useAnimalStore.getState().logCareAction(animalId, eventType as 'seen' | 'fed' | 'treated' | 'sheltered');
       // A blocking alert() interrupts the person mid-flow and, on mobile, hides
       // the very timeline they just added to.
-      setThanks(`Thank you for caring for ${animal?.name ?? 'them'}! 🐾`);
+      // Feeders tend to stop at feeding. Feeding time is the best moment to notice
+      // a limp or a wound, so the thank-you points at the survey card above.
+      setThanks(
+        eventType === 'fed'
+          ? `Thank you for feeding ${animal?.name ?? 'them'}! 🐾 While you're there — anything you noticed? The survey card above takes 30 seconds.`
+          : `Thank you for caring for ${animal?.name ?? 'them'}! 🐾`,
+      );
       window.setTimeout(() => setThanks(null), 2500);
     } finally {
       setAdding(false);

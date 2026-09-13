@@ -19,6 +19,7 @@ import { LIFECYCLE, suggestedLifecycle } from '@/lib/lifecycle';
 import WhereTheyveBeen from '@/components/where-theyve-been';
 import { tenureLine } from '@/lib/life-story';
 import LifeStory from '@/components/life-story';
+import { assessFile } from '@/lib/photo-quality';
 
 const EMPTY_IMAGES: any[] = [];
 
@@ -50,6 +51,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const [showMedicalForm, setShowMedicalForm] = useState(false);
   const [newMedicalRecord, setNewMedicalRecord] = useState<Partial<MedicalRecord>>({});
 
+  const [photoAdvice, setPhotoAdvice] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const addImage = useImageStore(state => state.addImage);
@@ -60,6 +62,10 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
   const handleProfileImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Advice, never a block: a blurry photo of an injured animal at night is
+    // still the most important photo anyone takes that day.
+    const quality = await assessFile(file);
+    setPhotoAdvice(quality.advice);
     try {
       const uploadedUrl = await uploadImageToCloudinary(file, 'pawbook/profiles');
       useAnimalStore.getState().updateAnimal(animal.id, { profile_image: uploadedUrl });
@@ -262,6 +268,11 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
             )}
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleProfileImageUpload} className="hidden" />
           </div>
+          {photoAdvice.length > 0 && (
+            <ul className="mt-2 text-xs text-amber-800 dark:text-amber-300 space-y-0.5 text-center" role="status">
+              {photoAdvice.map((a) => <li key={a}>📷 {a}</li>)}
+            </ul>
+          )}
 
           <h2 className="text-3xl font-bold text-foreground text-center">{animal.name}</h2>
           {isDeceased && animal.death_date && (

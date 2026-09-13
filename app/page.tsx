@@ -20,6 +20,7 @@ import { needsAttention } from '@/lib/survey';
 import CampusCensus from '@/components/campus-census';
 import { campus } from '@/lib/campus';
 import ExportRegister from '@/components/export-register';
+import CampusMap from '@/components/campus-map';
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -96,6 +97,8 @@ export default function Home() {
         />
 
         <CampusCensus animals={animals} />
+
+        <CampusMap animals={animals} onOpenProfile={setSelectedAnimal} />
 
         <NeedsYouMost animals={activeAnimals} onOpenProfile={setSelectedAnimal} />
 

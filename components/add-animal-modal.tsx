@@ -9,6 +9,7 @@ import type { Animal } from '@/lib/demo-data';
 import { optimizeImageUrl } from '@/lib/image-url';
 import type { Coords } from '@/lib/duplicate-detection';
 import LocationCapture from '@/components/location-capture';
+import { assessFile } from '@/lib/photo-quality';
 
 interface AddAnimalModalProps {
   animals: Animal[];
@@ -29,6 +30,7 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [photoAdvice, setPhotoAdvice] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,10 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Advice, never a block: a blurry photo of an injured animal at night is
+    // still the most important photo anyone takes that day.
+    const quality = await assessFile(file);
+    setPhotoAdvice(quality.advice);
     try {
       const uploadedUrl = await uploadImageToCloudinary(file, 'pawbook/profiles');
       setProfileImage(uploadedUrl);
@@ -185,6 +191,11 @@ export default function AddAnimalModal({ animals, onClose, onAnimalAdded }: AddA
                   </ul>
                   <p className="text-xs text-amber-700 mt-1">If this is the same animal, please update that profile instead of creating a new one.</p>
                 </div>
+            {photoAdvice.length > 0 && (
+              <ul className="mt-2 text-xs text-amber-800 dark:text-amber-300 space-y-0.5 text-center" role="status">
+                {photoAdvice.map((a) => <li key={a}>📷 {a}</li>)}
+              </ul>
+            )}
               </div>
             </div>
           )}

@@ -18,7 +18,7 @@ import { lifecycleLabel } from './lifecycle';
 import { getPresence } from './presence';
 import { describeRange, sightingsOf } from './sightings';
 import { summariseObservation } from './survey';
-import { getCoverage } from './coverage';
+import { getCoverage, getWelfare } from './coverage';
 
 function cell(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -133,6 +133,7 @@ export async function buildRegisterBundle(
 export function summaryText(animals: Animal[], campusName: string, estimatedPopulation: number | undefined, now = Date.now()): string {
   const living = animals.filter((a) => a.status !== 'deceased');
   const cov = getCoverage(animals, now);
+  const welfare = getWelfare(animals);
   const unseen = living.filter((a) => getPresence(a, now).state === 'unseen').length;
   const flagged = living.filter((a) => a.observation?.visible_wound || a.observation?.body_condition === 'thin').length;
   const when = new Date(now).toISOString().slice(0, 10);
@@ -148,6 +149,8 @@ export function summaryText(animals: Animal[], campusName: string, estimatedPopu
     `Rabies vaccination in the last 12 months: ${cov.rabiesCurrent} of ${cov.denominator}`,
     `Not seen in 45+ days: ${unseen}`,
     `Flagged on survey (wound or thin): ${flagged}`,
+    '',
+    `Welfare indicators (of ${welfare.surveyed} animals surveyed): thin ${welfare.thin}, hair loss ${welfare.hairLoss}, visible wound ${welfare.wound}, ticks/fleas ${welfare.ectoparasites}`,
     '',
     'Counts come from confirmed medical records only. An ear notch is recorded as observed and is not treated as proof of sterilisation.',
     'Locations are zones, never coordinates. Contributor identities are not included.',

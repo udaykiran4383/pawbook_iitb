@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
 import type { Animal } from '@/lib/demo-data';
 import { LIFECYCLE, lifecycleCounts } from '@/lib/lifecycle';
-import { getCoverage } from '@/lib/coverage';
+import { getCoverage, getWelfare } from '@/lib/coverage';
 
 interface CampusCensusProps {
   animals: Animal[];
@@ -23,6 +23,7 @@ interface CampusCensusProps {
 export default function CampusCensus({ animals }: CampusCensusProps) {
   const counts = useMemo(() => lifecycleCounts(animals), [animals]);
   const coverage = useMemo(() => getCoverage(animals), [animals]);
+  const welfare = useMemo(() => getWelfare(animals), [animals]);
 
   if (animals.length === 0) return null;
 
@@ -72,6 +73,12 @@ export default function CampusCensus({ animals }: CampusCensusProps) {
               </p>
             </div>
           </div>
+        )}
+
+        {welfare.surveyed > 0 && (
+          <p className="text-xs text-foreground/90 text-center mt-3">
+            Of {welfare.surveyed} surveyed: {welfare.thin} thin · {welfare.hairLoss} with hair loss · {welfare.wound} with a wound · {welfare.ectoparasites} with ticks or fleas
+          </p>
         )}
 
         <p className="text-[10px] text-muted-foreground text-center mt-3 leading-relaxed">

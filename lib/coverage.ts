@@ -46,6 +46,38 @@ function isRabiesVaccination(record: any): boolean {
   return /rabies|anti-rabies|\barv\b/.test(text) && /vaccin|shot|dose|booster/.test(text);
 }
 
+/**
+ * Welfare indicators, from the survey observations rather than vet records.
+ *
+ * The one rigorous free-roaming-dog welfare study in the Chinese-speaking world
+ * (Taiwan, 2019) published lameness, skin-disease and body-condition rates
+ * explicitly "to earn public support". A campus divided on its animals is
+ * persuaded by "3% thin, 7% with skin trouble, 92% vaccinated", not by a
+ * count. These only mean anything relative to how many animals have actually
+ * been surveyed, so that denominator is returned and must be shown.
+ */
+export interface Welfare {
+  surveyed: number;
+  thin: number;
+  hairLoss: number;
+  wound: number;
+  ectoparasites: number;
+}
+
+export function getWelfare(animals: Pick<Animal, 'status' | 'observation'>[]): Welfare {
+  const living = animals.filter((a) => a.status !== 'deceased');
+  const surveyed = living.filter((a) => a.observation && Object.keys(a.observation).some((k) => k !== 'observed_at'));
+  const count = (pred: (o: NonNullable<Animal['observation']>) => boolean) =>
+    surveyed.filter((a) => pred(a.observation!)).length;
+  return {
+    surveyed: surveyed.length,
+    thin: count((o) => o.body_condition === 'thin'),
+    hairLoss: count((o) => Boolean(o.hair_loss)),
+    wound: count((o) => Boolean(o.visible_wound)),
+    ectoparasites: count((o) => Boolean(o.ectoparasites)),
+  };
+}
+
 export function getCoverage(animals: Pick<Animal, 'status' | 'medical_records'>[], now = Date.now()): Coverage {
   // Living animals only: coverage of the dead is not a health metric.
   const living = animals.filter((a) => a.status !== 'deceased');
