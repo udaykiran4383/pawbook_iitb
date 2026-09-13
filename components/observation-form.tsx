@@ -8,6 +8,7 @@ import {
   BODY_OPTIONS,
   HEALTH_FLAGS,
   SEX_OPTIONS,
+  TEMPERAMENT_OPTIONS,
   summariseObservation,
   type Observation,
 } from '@/lib/survey';
@@ -110,6 +111,14 @@ export default function ObservationForm({ animalId, current }: ObservationFormPr
         value={draft.body_condition}
         options={BODY_OPTIONS}
         onChange={(v) => set('body_condition', v)}
+      />
+
+      {/* Drives the pin colour on the map, so a stranger knows whom to greet. */}
+      <Choice
+        label="How are they with people?"
+        value={draft.temperament}
+        options={TEMPERAMENT_OPTIONS}
+        onChange={(v) => set('temperament', v)}
       />
 
       <fieldset>

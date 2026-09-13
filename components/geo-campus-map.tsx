@@ -5,6 +5,7 @@ import type { Animal } from '@/lib/demo-data';
 import { getMapLayout, zoneFor, type MapZone } from '@/lib/campus-map';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { getPresence } from '@/lib/presence';
+import { temperamentColour } from '@/lib/survey';
 import { useCampus } from '@/components/campus-provider';
 
 interface GeoCampusMapProps {
@@ -159,12 +160,23 @@ export default function GeoCampusMap({ animals, onOpenProfile }: GeoCampusMapPro
       perZone.set(z.id, i + 1);
       const { dLat, dLng } = offsetFor(a.id, i, z.geo.radius);
       const faded = getPresence(a).state === 'unseen';
+      // Same ring colours as the sketch, so the two views agree.
+      const temperament = a.observation?.temperament;
+      const ring = temperamentColour(temperament);
+      const unknown = !temperament || temperament === 'unknown';
 
       const el = document.createElement('button');
       el.type = 'button';
-      el.title = `${a.name} · ${a.location}`;
-      el.setAttribute('aria-label', `${a.name}, around ${z.label}`);
-      el.style.cssText = `width:40px;height:40px;border-radius:50%;border:2px solid #9C8264;background:#fff url("${getAnimalAvatar(a, 80)}") center/cover;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;opacity:${faded ? 0.55 : 1};padding:0`;
+      el.title = `${a.name} · ${a.location} · ${ring.label}`;
+      el.setAttribute('aria-label', `${a.name}, around ${z.label}, ${ring.label}`);
+      el.style.cssText = `position:relative;width:40px;height:40px;border-radius:50%;border:3px solid ${ring.stroke};background:${ring.fill} url("${getAnimalAvatar(a, 80)}") center/cover;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;opacity:${faded ? 0.55 : 1};padding:0`;
+      if (unknown) {
+        const badge = document.createElement('span');
+        badge.textContent = '?';
+        badge.setAttribute('aria-hidden', 'true');
+        badge.style.cssText = `position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#FFF8EE;border:1.5px solid ${ring.stroke};color:${ring.stroke};font:700 10px/13px system-ui,sans-serif;text-align:center`;
+        el.appendChild(badge);
+      }
       el.addEventListener('click', () => onOpenProfile(a));
 
       const marker = new maplibregl.Marker({ element: el })

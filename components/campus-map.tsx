@@ -7,6 +7,7 @@ import type { Animal } from '@/lib/demo-data';
 import { getMapLayout, scatter, zoneFor, type MapZone } from '@/lib/campus-map';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { getPresence } from '@/lib/presence';
+import { TEMPERAMENT_OPTIONS, temperamentColour } from '@/lib/survey';
 import { useCampus } from '@/components/campus-provider';
 
 // MapLibre reads `window` on import; load it only on the client, only when shown.
@@ -147,6 +148,11 @@ export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
               {placed.pins.map(({ animal, x, y }) => {
                 const presence = getPresence(animal);
                 const faded = presence.state === 'unseen';
+                // JohnJud's trick: the ring says how to approach before the
+                // name does. Grey plus a "?" is a request, not a blank.
+                const temperament = animal.observation?.temperament;
+                const ring = temperamentColour(temperament);
+                const unknown = !temperament || temperament === 'unknown';
                 return (
                   <g
                     key={animal.id}
@@ -156,10 +162,10 @@ export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpenProfile(animal); }}
-                    aria-label={`${animal.name}, ${animal.location}`}
+                    aria-label={`${animal.name}, ${animal.location}, ${ring.label}`}
                   >
-                    <title>{animal.name} · {animal.location}{faded ? ' · not seen in a while' : ''}</title>
-                    <circle cx="18" cy="18" r="20" fill="#FFFFFF" stroke="#9C8264" strokeWidth="2" opacity={faded ? 0.55 : 1} />
+                    <title>{animal.name} · {animal.location} · {ring.label}{faded ? ' · not seen in a while' : ''}</title>
+                    <circle cx="18" cy="18" r="20" fill={ring.fill} stroke={ring.stroke} strokeWidth="3" opacity={faded ? 0.55 : 1} />
                     <clipPath id={`clip-${animal.id}`}><circle cx="18" cy="18" r="17" /></clipPath>
                     <image
                       href={getAnimalAvatar(animal, 80)}
@@ -168,6 +174,12 @@ export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
                       preserveAspectRatio="xMidYMid slice"
                       opacity={faded ? 0.55 : 1}
                     />
+                    {unknown && (
+                      <g aria-hidden="true">
+                        <circle cx="32" cy="4" r="7" fill="#FFF8EE" stroke={ring.stroke} strokeWidth="1.5" />
+                        <text x="32" y="7.5" textAnchor="middle" fontSize="10" fontWeight="700" fill={ring.stroke}>?</text>
+                      </g>
+                    )}
                     <text x="18" y="52" textAnchor="middle" fontSize="12" fontWeight="700" fill="#2C2416" style={{ paintOrder: 'stroke', stroke: '#FFF8EE', strokeWidth: 3 }}>
                       {animal.name}
                     </text>
@@ -177,6 +189,24 @@ export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
 
               <text x="12" y="735" fontSize="11" fill="#6B5A4E">{layout.caption}</text>
             </svg>
+
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-t border-amber-200 text-[11px] text-foreground" aria-label="Pin colours">
+              {TEMPERAMENT_OPTIONS.map((o) => {
+                const c = temperamentColour(o.value);
+                return (
+                  <li key={o.value} className="flex items-center gap-1.5">
+                    <span
+                      className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none"
+                      style={{ background: c.fill, border: `2px solid ${c.stroke}`, color: c.stroke }}
+                      aria-hidden="true"
+                    >
+                      {o.value === 'unknown' ? '?' : ''}
+                    </span>
+                    {o.value === 'unknown' ? 'Not sure — help identify' : o.label}
+                  </li>
+                );
+              })}
+            </ul>
 
             {placed.elsewhere.length > 0 && (
               <p className="text-xs text-muted-foreground px-4 py-2 border-t border-amber-200">

@@ -22,6 +22,12 @@ export type Sex = 'male' | 'female' | 'unknown';
 export type AgeClass = 'puppy' | 'juvenile' | 'adult' | 'senior' | 'unknown';
 /** Three-point scale used in field surveys: thin / ideal / heavy. */
 export type BodyCondition = 'thin' | 'ideal' | 'heavy' | 'unknown';
+/**
+ * How the animal is with people. Chulalongkorn's JohnJud colours every pin by
+ * this so a newcomer knows at a glance which dog to greet and which to give
+ * room. 'unknown' is not a null: it is an open request for someone to find out.
+ */
+export type Temperament = 'friendly' | 'cautious' | 'keep_distance' | 'unknown';
 
 export interface Observation {
   sex?: Sex;
@@ -36,6 +42,7 @@ export interface Observation {
   hair_loss?: boolean;
   visible_wound?: boolean;
   ectoparasites?: boolean;
+  temperament?: Temperament;
   /** When these fields were last updated, so stale observations read as stale. */
   observed_at?: string;
 }
@@ -70,6 +77,31 @@ export const BODY_OPTIONS: Array<{ value: BodyCondition; label: string; hint: st
   { value: 'heavy', label: 'Heavy', hint: 'no waist, ribs hard to feel' },
 ];
 
+export const TEMPERAMENT_OPTIONS: Array<{ value: Temperament; label: string; hint: string }> = [
+  { value: 'unknown', label: 'Not sure', hint: 'nobody has checked yet — help identify' },
+  { value: 'friendly', label: 'Friendly', hint: 'approaches people, happy to be petted' },
+  { value: 'cautious', label: 'Cautious', hint: 'keeps its distance, may come for food' },
+  { value: 'keep_distance', label: 'Keep distance', hint: 'growls or snaps when approached' },
+];
+
+/**
+ * The pin colour for a temperament, as JohnJud does it: green go, yellow
+ * careful, red keep away, and grey for "nobody knows yet, please look". The
+ * fills are pale so a photo still shows through; the strokes carry the signal.
+ */
+export function temperamentColour(t: Temperament | undefined): { fill: string; stroke: string; label: string } {
+  switch (t) {
+    case 'friendly':
+      return { fill: '#C9F0DC', stroke: '#0F7A50', label: 'Friendly' };
+    case 'cautious':
+      return { fill: '#FFE3C2', stroke: '#B45309', label: 'Cautious' };
+    case 'keep_distance':
+      return { fill: '#FFD9E2', stroke: '#B42318', label: 'Keep distance' };
+    default:
+      return { fill: '#E8D4C4', stroke: '#6B5A4E', label: 'Unknown — help identify' };
+  }
+}
+
 /** The yes/no health flags, in the order a surveyor would run through them. */
 export const HEALTH_FLAGS: Array<{ key: keyof Observation; label: string; urgent?: boolean }> = [
   { key: 'visible_wound', label: 'Visible wound or injury', urgent: true },
@@ -93,6 +125,9 @@ export function summariseObservation(observation: Observation | undefined): stri
   if (observation.age_class && observation.age_class !== 'unknown') parts.push(observation.age_class);
   if (observation.body_condition && observation.body_condition !== 'unknown') {
     parts.push(BODY_OPTIONS.find((o) => o.value === observation.body_condition)?.label.toLowerCase() ?? '');
+  }
+  if (observation.temperament && observation.temperament !== 'unknown') {
+    parts.push(temperamentColour(observation.temperament).label.toLowerCase());
   }
   if (observation.lactating) parts.push('lactating');
   if (observation.collar_seen) parts.push('collared');
