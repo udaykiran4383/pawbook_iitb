@@ -5,6 +5,7 @@ import { FileDown, ClipboardCopy, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
 import { buildRegisterBundle } from '@/lib/export';
 import { useCampus } from '@/components/campus-provider';
+import Link from 'next/link';
 
 /**
  * Downloads the register the institution can file.
@@ -14,7 +15,7 @@ import { useCampus } from '@/components/campus-provider';
  * contributor identities by construction.
  */
 export default function ExportRegister() {
-  const { campus } = useCampus();
+  const { campus, basePath } = useCampus();
   const animals = useAnimalStore((s) => s.animals);
   const [copied, setCopied] = useState(false);
 
@@ -50,7 +51,12 @@ export default function ExportRegister() {
   return (
     <section className="px-4 mb-8">
       <div className="max-w-2xl mx-auto bg-white/80 dark:bg-card border border-border rounded-3xl p-4">
-        <p className="text-sm font-bold text-foreground">Register for the institution</p>
+        <p className="text-sm font-bold text-foreground flex items-center justify-between gap-2">
+          Register for the institution
+          <Link href={`${basePath}/officials`} className="text-xs font-normal text-amber-800 dark:text-amber-300 underline underline-offset-2">
+            Institution view →
+          </Link>
+        </p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
           The same records as spreadsheets, in the vocabulary survey teams use — for a Nodal
           Officer, an affidavit, or a municipal survey. Zones only, no coordinates, no names.

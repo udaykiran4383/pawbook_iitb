@@ -77,7 +77,11 @@ export interface Animal {
    * Identifiers in other systems. pawfriend_uid is the QR-collar id the
    * campus/BMC programme uses (paw_xxxxxxxxx); we link out and never import.
    */
-  external_ids?: { pawfriend_uid?: string };
+  external_ids?: {
+    pawfriend_uid?: string;
+    /** NDDB 15-digit identification number (ISO 11784), if the animal is chipped. */
+    nddb_id?: string;
+  };
 }
 
 export const demoAnimals: Animal[] = [

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pawbookiitb.vercel.app/schema/abc-event.v0.1.json",
+  "title": "ABC Event v0.1",
+  "description": "One event in the life of a street animal under India's Animal Birth Control (Dogs) Rules 2023. Fields map to Rule 12(1) (capture/release register), Schedule III (per-veterinarian monthly return) and Schedule IV (daily counts). Identity key is the NDDB 15-digit ISO 11784 number where the animal is chipped; local_id otherwise. Localities are zones or wards — precise coordinates are not permitted in this schema. Licence: CC-BY-4.0.",
+  "type": "object",
+  "required": ["event_id", "event_type", "occurred_at", "local_id", "local_system", "source", "recorded_at"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id":    { "type": "string", "minLength": 1 },
+    "event_type":  { "type": "string", "enum": ["capture", "sterilisation", "arv", "booster", "deworming", "treatment", "observation", "release", "death"],
+                     "description": "capture/release: Rule 12(1). sterilisation: Schedule III. observation/death: Schedule IV columns." },
+    "occurred_at": { "type": "string", "format": "date-time" },
+
+    "nddb_id":     { "type": "string", "pattern": "^[0-9]{15}$", "description": "NDDB-approved 15-digit identification number (ISO 11784)." },
+    "tag_number":  { "type": "string", "description": "Rule 11(8): numbered collar/tag assigned on arrival." },
+    "local_id":    { "type": "string", "minLength": 1, "description": "Identifier in the recording system, e.g. pawbook:8089." },
+    "local_system":{ "type": "string", "enum": ["pawbook"] },
+
+    "species":     { "type": "string", "enum": ["dog", "cat", "other"] },
+    "sex":         { "type": "string", "enum": ["male", "female", "unknown"], "description": "Rule 12(1)(iv)." },
+    "colour":      { "type": "string", "description": "Rule 12(1)(iv)." },
+    "identification_marks": { "type": "string", "maxLength": 500, "description": "Rule 12(1)(iv)." },
+    "approx_age":  { "type": "string", "description": "Rule 12(1)(iv)." },
+
+    "locality":    { "type": "string", "description": "Rule 12(1)(i) area of capture, or 12(1)(vi) place of release. A zone or ward name, never a coordinate." },
+    "ward":        { "type": "string" },
+
+    "performed_by":        { "type": "string", "description": "Rule 12(1)(iii) capturing squad, or the NGO / Project Implementing Agency." },
+    "vet_name":            { "type": "string", "description": "Schedule III." },
+    "vet_registration_no": { "type": "string", "description": "Schedule III: Veterinary Council registration number." },
+    "ear_notch":           { "type": "string", "enum": ["right", "left", "none", "unknown"], "description": "Rule 11(16): V-notch on the right ear. Observed only; not proof of sterilisation." },
+
+    "vaccine":      { "type": "string" },
+    "batch_no":     { "type": "string" },
+    "valid_until":  { "type": "string", "format": "date" },
+    "complication": { "type": "string", "description": "Schedule III: post-operative complication." },
+    "notes":        { "type": "string", "maxLength": 1000 },
+
+    "evidence_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of a certificate or photo held elsewhere." },
+    "source":        { "type": "string", "enum": ["pho_record", "awo_certificate", "feeder_report", "unknown"],
+                       "description": "Provenance tier. Only pho_record and awo_certificate should count toward a return an officer signs." },
+    "recorded_at":   { "type": "string", "format": "date-time" },
+    "recorded_by":   { "type": "string", "description": "Pseudonym of the recorder. Never a legal identity, phone or email." }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_type": { "const": "sterilisation" }, "source": { "enum": ["pho_record", "awo_certificate"] } }, "required": ["event_type", "source"] },
+      "then": { "required": ["vet_registration_no"] }
+    }
+  ]
+}

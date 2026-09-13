@@ -19,6 +19,7 @@ import { getPresence } from './presence';
 import { describeRange, sightingsOf } from './sightings';
 import { summariseObservation } from './survey';
 import { getCoverage, getWelfare } from './coverage';
+import { ABC_EVENT_COLUMNS, scheduleIII, scheduleIV, toAbcEvents, type AbcEvent } from './abc-events';
 
 function cell(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -96,6 +97,38 @@ export function medicalCsv(animals: Animal[]): string {
   return lines.join('\r\n') + '\r\n';
 }
 
+/** All animals' events in ABC Event Schema v0.1, Rule 12(1) column order. */
+export function abcEventsCsv(animals: Animal[], campusName: string): string {
+  const lines = [row(ABC_EVENT_COLUMNS)];
+  // Chronological across all animals — a register reads as a ledger, not as
+  // sixteen separate histories.
+  const events = animals
+    .flatMap((a) => toAbcEvents(a, campusName))
+    .sort((x, y) => Date.parse(x.occurred_at) - Date.parse(y.occurred_at));
+  for (const e of events) lines.push(row(ABC_EVENT_COLUMNS.map((k) => (e as any)[k])));
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** Schedule III for a month (YYYY-MM): per-veterinarian surgery return. */
+export function scheduleIIICsv(animals: Animal[], campusName: string, month: string): string {
+  const events: AbcEvent[] = animals.flatMap((a) => toAbcEvents(a, campusName));
+  const lines = [row(['month', 'veterinarian', 'registration_no', 'surgeries', 'of_which_verified', 'post_op_complications', 'post_op_deaths'])];
+  for (const r of scheduleIII(events, month)) {
+    lines.push(row([month, r.vet_name, r.vet_registration_no, r.surgeries, r.verified_surgeries, r.complications, r.deaths_post_op]));
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** Schedule IV for a month: daily counts with the two signature columns left blank. */
+export function scheduleIVCsv(animals: Animal[], campusName: string, month: string): string {
+  const events: AbcEvent[] = animals.flatMap((a) => toAbcEvents(a, campusName));
+  const lines = [row(['date', 'captured_male', 'captured_female', 'captured_total', 'sterilised', 'under_observation', 'released', 'mortality', 'verification_by_MVO_JVO', 'verification_by_DVO'])];
+  for (const r of scheduleIV(events, month)) {
+    lines.push(row([r.date, r.captured_male, r.captured_female, r.captured_total, r.sterilised, r.under_observation, r.released, r.mortality, '', '']));
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
 /**
  * SHA-256 of a file's contents, hex. Printed on the cover sheet so anyone
  * holding the register later can check that what they were given is what was
@@ -114,19 +147,21 @@ export async function buildRegisterBundle(
   campusName: string,
   estimatedPopulation: number | undefined,
   now = Date.now(),
-): Promise<{ register: string; sightings: string; medical: string; summary: string }> {
+): Promise<{ register: string; sightings: string; medical: string; abcEvents: string; summary: string }> {
   const register = animalRegisterCsv(animals, now);
   const sightings = sightingsCsv(animals);
   const medical = medicalCsv(animals);
-  const [h1, h2, h3] = await Promise.all([contentHash(register), contentHash(sightings), contentHash(medical)]);
+  const abcEvents = abcEventsCsv(animals, campusName);
+  const [h1, h2, h3, h4] = await Promise.all([contentHash(register), contentHash(sightings), contentHash(medical), contentHash(abcEvents)]);
   const summary =
     summaryText(animals, campusName, estimatedPopulation, now) +
     '\n\nIntegrity (SHA-256):\n' +
-    `register.csv   ${h1}\n` +
-    `sightings.csv  ${h2}\n` +
-    `medical.csv    ${h3}\n` +
+    `register.csv     ${h1}\n` +
+    `sightings.csv    ${h2}\n` +
+    `medical.csv      ${h3}\n` +
+    `abc-events.csv   ${h4}   (ABC Event Schema v0.1 — see /schema/abc-event.v0.1.json)\n` +
     '\nTo verify on any machine: shasum -a 256 <file>';
-  return { register, sightings, medical, summary };
+  return { register, sightings, medical, abcEvents, summary };
 }
 
 /** The cover sheet: what the register is, and the honest denominators. */

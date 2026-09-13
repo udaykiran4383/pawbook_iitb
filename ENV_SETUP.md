@@ -512,3 +512,11 @@ Once all checklist items are complete, your PawBook IITB application is ready fo
 Every campus-specific value — name, bounds, zones, welfare group, authority
 office, population estimate — is an environment variable with an IIT Bombay
 default. See `DEPLOY_YOUR_CAMPUS.md`. Nothing needs forking.
+
+## Institution view
+
+`/officials` (and `/c/<slug>/officials`) is the officer's dashboard: verified
+coverage, flagged and unseen animals, a compliance checklist, and exports in the
+ABC Rules' own Schedule III/IV format. Set `NEXT_PUBLIC_OFFICIALS_CODE` to put an
+access code in front of it. That is friction, not security — there are no
+accounts. Named roles and an audit trail are the institutional tier.
