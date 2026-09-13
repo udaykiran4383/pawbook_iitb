@@ -22,6 +22,7 @@
  */
 
 import type { Animal } from './demo-data';
+import type { Temperament } from './survey';
 
 export interface PublicAnimal {
   id: number;
@@ -42,6 +43,11 @@ export interface PublicAnimal {
   comments: Array<{ id?: string; text?: string; timestamp?: string }>;
   /** Zone-level only, and without the pseudonym of who logged it. */
   sightings: Array<{ id: string; at: string; zone: string; kind: string }>;
+  /**
+   * About the animal, not a person, and the one field that protects the
+   * reader: "keep distance" on a QR page is a warning to whoever scanned it.
+   */
+  temperament?: Temperament;
 }
 
 function publicMemory(memory: any) {
@@ -80,6 +86,7 @@ export function toPublicAnimal(animal: Animal): PublicAnimal {
     sightings: Array.isArray(animal.sightings)
       ? animal.sightings.map((s) => ({ id: s.id, at: s.at, zone: s.zone, kind: s.kind }))
       : [],
+    temperament: animal.observation?.temperament,
   };
 }
 

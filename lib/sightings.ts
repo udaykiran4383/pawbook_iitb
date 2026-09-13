@@ -113,6 +113,37 @@ export function absencesOf(animal: Pick<Animal, 'sightings'>): Sighting[] {
   return sightingsOf(animal).filter((s) => s.kind === 'not_found');
 }
 
+const DAY_MS = 86_400_000;
+
+/** Sightings inside the last `days`, excluding absences — those are looks, not finds. */
+export function sightingsInWindow(animal: Pick<Animal, 'sightings'>, days: number, now = Date.now()): Sighting[] {
+  const since = now - days * DAY_MS;
+  return sightingsOf(animal).filter((s) => {
+    if (s?.kind === 'not_found') return false;
+    const at = Date.parse(s?.at ?? '');
+    return Number.isFinite(at) && at >= since && at <= now;
+  });
+}
+
+/** NTU's threshold: a new animal seen this often is here to stay and needs a survey. */
+export const ESCALATE_SIGHTINGS = 3;
+export const ESCALATE_WINDOW_DAYS = 14;
+/** Beyond this the animal is a resident, not a newcomer, and the nudge is noise. */
+export const NEW_ANIMAL_DAYS = 30;
+
+/**
+ * NTU Taiwan's campus-dog guidelines escalate an unfamiliar animal after three
+ * sightings in two weeks: at that point it is not passing through, and someone
+ * should go and register it properly — survey, photo, temperament, ABC status.
+ * The age cut keeps the nudge on newcomers; a dog known for years and seen
+ * every day has nothing left to escalate.
+ */
+export function isEscalated(animal: Pick<Animal, 'sightings' | 'created_at'>, now = Date.now()): boolean {
+  const created = Date.parse(animal?.created_at ?? '');
+  if (!Number.isFinite(created) || now - created > NEW_ANIMAL_DAYS * DAY_MS) return false;
+  return sightingsInWindow(animal, ESCALATE_WINDOW_DAYS, now).length >= ESCALATE_SIGHTINGS;
+}
+
 /** Sightings for an animal, tolerant of records that predate the feature. */
 export function sightingsOf(animal: Pick<Animal, 'sightings'>): Sighting[] {
   return Array.isArray(animal?.sightings) ? animal.sightings : [];

@@ -10,6 +10,7 @@ import { formatTimeSince } from '@/lib/care-tracking';
 import type { Animal } from '@/lib/demo-data';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
 import { describeRange } from '@/lib/sightings';
+import { temperamentColour } from '@/lib/survey';
 import QuickSighting from '@/components/quick-sighting';
 import { DEFAULT_CAMPUS_SLUG, campusBasePath, findCampus } from '@/lib/campuses';
 
@@ -104,6 +105,10 @@ export default async function AnimalPage({ params }: PageProps) {
 
   const seenAt = animal.last_seen ? new Date(animal.last_seen) : null;
   const fedAt = animal.last_fed ? new Date(animal.last_fed) : null;
+  // Shown whenever someone has recorded it: "keep distance" is the one line on
+  // this page that protects the person who just scanned the QR code.
+  const temperament =
+    animal.temperament && animal.temperament !== 'unknown' ? temperamentColour(animal.temperament) : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
@@ -159,6 +164,17 @@ export default async function AnimalPage({ params }: PageProps) {
 
           {animal.description && (
             <p className="mt-4 text-foreground leading-relaxed">{animal.description}</p>
+          )}
+
+          {temperament && !isDeceased && (
+            <p className="mt-4">
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-3 py-1 border-2"
+                style={{ background: temperament.fill, borderColor: temperament.stroke, color: temperament.stroke }}
+              >
+                With people: {temperament.label.toLowerCase()}
+              </span>
+            </p>
           )}
 
           {Array.isArray(animal.personality_tags) && animal.personality_tags.length > 0 && (

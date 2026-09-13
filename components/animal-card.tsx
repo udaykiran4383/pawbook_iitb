@@ -11,6 +11,7 @@ import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { animalPath } from '@/lib/animal-slug';
 import { optimizeImageUrl } from '@/lib/image-url';
 import { getPresence } from '@/lib/presence';
+import { isEscalated } from '@/lib/sightings';
 import { useCampus } from '@/components/campus-provider';
 
 // Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
@@ -52,6 +53,9 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const isSeenUrgent = presence.state === 'unseen';
   const isSeenFading = presence.state === 'fading';
   const isFedUrgent = !isDeceased && now - new Date(animal.last_fed).getTime() > 12 * 60 * 60 * 1000;
+  // NTU's rule: a newcomer seen three times in a fortnight is staying, and
+  // someone should go and survey them before the trail goes cold.
+  const escalated = !isDeceased && isEscalated(animal, now);
 
   const handleLike = () => {
     if (!liked) {
@@ -179,6 +183,14 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
           </a>
         )}
       </div>
+
+      {escalated && (
+        <div className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-1.5 mb-3 text-center">
+          <p className="text-[11px] font-bold text-sky-800">
+            🆕 New — seen 3× in 2 weeks, please survey
+          </p>
+        </div>
+      )}
 
       {/* Last Seen & Last Fed — for active animals */}
       {!isDeceased && (
