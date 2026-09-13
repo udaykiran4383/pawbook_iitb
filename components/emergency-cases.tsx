@@ -89,7 +89,7 @@ export default function EmergencyCases() {
           {cases.map(emergencyCase => (
             <div
               key={emergencyCase.id}
-              className={`bg-gradient-to-br ${getSeverityColor(emergencyCase.severity)} border-2 p-4 rounded-2xl soft-shadow hover:shadow-lg transition`}
+              className={`on-tint bg-gradient-to-br ${getSeverityColor(emergencyCase.severity)} border-2 p-4 rounded-2xl soft-shadow hover:shadow-lg transition`}
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-3xl">{getSeverityIcon(emergencyCase.severity)}</span>

@@ -13,7 +13,7 @@ export default function CommunityInfo() {
   return (
     <section className="mb-12">
       {/* Bob Ross Quote */}
-      <div className="bg-gradient-to-r from-green-50 via-teal-50 to-blue-50 border-2 border-green-200/40 rounded-3xl p-6 mb-8 text-center shadow-sm">
+      <div className="on-tint bg-gradient-to-r from-green-50 via-teal-50 to-blue-50 border-2 border-green-200/40 rounded-3xl p-6 mb-8 text-center shadow-sm">
         <p className="text-lg md:text-xl text-foreground font-medium italic leading-relaxed">
           "If we're going to have animals around we all have to be concerned about them and take care of them."
         </p>
@@ -29,7 +29,7 @@ export default function CommunityInfo() {
       <div className="mb-4">
         <button
           onClick={() => toggleSection('rules')}
-          className="w-full flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-2 border-amber-200/60 rounded-2xl p-4 transition active:scale-[0.99]"
+          className="on-tint w-full flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-2 border-amber-200/60 rounded-2xl p-4 transition active:scale-[0.99]"
         >
           <h3 className="text-lg font-bold text-foreground flex items-center gap-2">📜 PawBook Rules</h3>
           {expandedSection === 'rules' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -43,8 +43,8 @@ export default function CommunityInfo() {
               { num: 4, text: 'Humans are not under purview of rule 3.', emoji: '😄' },
               { num: 5, text: "Rules can't be changed.", emoji: '🔒' },
             ].map(rule => (
-              <div key={rule.num} className="flex items-start gap-3 bg-amber-50/50 p-3 rounded-xl">
-                <div className="flex-shrink-0 w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center font-bold text-sm text-amber-800">
+              <div key={rule.num} className="on-tint flex items-start gap-3 bg-amber-50/50 p-3 rounded-xl">
+                <div className="flex-shrink-0 w-8 h-8 bg-amber-200 dark:bg-amber-900/60 rounded-full flex items-center justify-center font-bold text-sm text-amber-800 dark:text-amber-200">
                   {rule.num}
                 </div>
                 <div className="flex items-center gap-2 flex-1">
@@ -61,7 +61,7 @@ export default function CommunityInfo() {
       <div className="mb-4">
         <button
           onClick={() => toggleSection('welfare')}
-          className="w-full flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200/60 rounded-2xl p-4 transition active:scale-[0.99]"
+          className="on-tint w-full flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200/60 rounded-2xl p-4 transition active:scale-[0.99]"
         >
           <h3 className="text-lg font-bold text-foreground flex items-center gap-2">🏥 Animal Welfare Group</h3>
           {expandedSection === 'welfare' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -69,10 +69,10 @@ export default function CommunityInfo() {
         {expandedSection === 'welfare' && (
           <div className="bg-white dark:bg-card border-2 border-blue-100 border-t-0 rounded-b-2xl p-5 space-y-4">
             {/* Main contact */}
-            <div className="bg-blue-50 rounded-xl p-4">
+            <div className="on-tint bg-blue-50 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
-                  <Phone size={18} className="text-blue-700" />
+                  <Phone size={18} className="text-blue-700 dark:text-blue-300" />
                 </div>
                 <div>
                   <p className="font-bold text-foreground">Mr. Mukki</p>
@@ -94,7 +94,7 @@ export default function CommunityInfo() {
               href="https://chat.whatsapp.com/BtkfaDN5gmeAcw9kGZnokf"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl p-4 transition active:scale-[0.98]"
+              className="on-tint flex items-center gap-3 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl p-4 transition active:scale-[0.98]"
             >
               <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
                 <MessageCircle size={18} className="text-white" />
@@ -103,7 +103,7 @@ export default function CommunityInfo() {
                 <p className="font-bold text-foreground text-sm">Join WhatsApp Group</p>
                 <p className="text-xs text-muted-foreground">IITB Animal Welfare Community</p>
               </div>
-              <ExternalLink size={16} className="text-green-600" />
+              <ExternalLink size={16} className="text-green-600 dark:text-green-400" />
             </a>
 
             {/* Professors in charge */}

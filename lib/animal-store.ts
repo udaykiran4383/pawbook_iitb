@@ -165,7 +165,10 @@ export const useAnimalStore = create<AnimalStore>()(
                   return val;
                 }
               } else {
-                console.error('Failed to load state from DB:', await response.text());
+                // 503 is the API saying storage is not configured — expected when
+                // running locally without credentials, so not worth an error.
+                const text = await response.text();
+                (response.status === 503 ? console.warn : console.error)('Could not load state from DB:', text);
               }
             } catch (err) {
               console.error('Failed to load state from DB:', err);

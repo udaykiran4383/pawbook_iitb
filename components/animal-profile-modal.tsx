@@ -196,7 +196,7 @@ export default function AnimalProfileModal({ animal: initialAnimal, onClose }: A
         )}
 
         {/* Hero header */}
-        <div className={`relative pt-8 pb-6 px-6 bg-gradient-to-br ${isDeceased ? 'from-purple-100 via-gray-100 to-purple-50' : 'from-pink-100 via-orange-50 to-yellow-50'}`}>
+        <div className={`on-tint relative pt-8 pb-6 px-6 bg-gradient-to-br ${isDeceased ? 'from-purple-100 via-gray-100 to-purple-50' : 'from-pink-100 via-orange-50 to-yellow-50'}`}>
           {/* Lifecycle chip — on campus / on leave / graduated / passed away. */}
           <div className={`absolute top-4 left-4 text-xs px-4 py-1 font-bold rounded-full shadow-md ${
             isDeceased ? 'bg-purple-600/80 text-white' : 'bg-white/90 dark:bg-card text-foreground'

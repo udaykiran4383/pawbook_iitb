@@ -107,7 +107,7 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
   const lastCaredBy = getDisplayActorName(animal.last_cared_by, animal.contributor);
 
   return (
-    <div className={`scrapbook-card bg-gradient-to-br ${bgGradient} p-5 relative overflow-hidden border-2 ${isDeceased ? 'border-purple-200/60' : 'border-white/50'} shadow-lg hover:shadow-xl transition-all duration-300`}>
+    <div className={`on-tint scrapbook-card bg-gradient-to-br ${bgGradient} p-5 relative overflow-hidden border-2 ${isDeceased ? 'border-purple-200/60' : 'border-white/50'} shadow-lg hover:shadow-xl transition-all duration-300`}>
       {/* Deceased ribbon */}
       {isDeceased && (
         <div className="absolute top-4 right-0 bg-purple-600/80 text-white text-xs px-4 py-1 font-bold rounded-l-full shadow-md z-20">

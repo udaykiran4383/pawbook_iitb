@@ -57,7 +57,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
                   <div className="flex-1">
                     <h3 className="text-2xl font-bold text-foreground">{animal.name}</h3>
                     {animal.death_date && (
-                      <p className="text-sm text-purple-600 font-medium">
+                      <p className="text-sm text-purple-600 dark:text-purple-300 font-medium">
                         {new Date(animal.death_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     )}
@@ -83,7 +83,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
 
                 {/* Death note */}
                 {animal.death_note && (
-                  <p className="text-sm text-purple-800/80 italic leading-relaxed mb-4 line-clamp-2">
+                  <p className="text-sm text-purple-800/80 dark:text-purple-200/90 italic leading-relaxed mb-4 line-clamp-2">
                     🕊️ {animal.death_note}
                   </p>
                 )}
@@ -104,7 +104,7 @@ export default function RainbowBridge({ animals, onOpenProfile }: RainbowBridgeP
                 )}
 
                 {/* CTA */}
-                <p className="text-xs text-purple-500 font-bold text-center mt-3 group-hover:text-purple-700 transition">
+                <p className="text-xs text-purple-500 dark:text-purple-300 font-bold text-center mt-3 group-hover:text-purple-700 dark:group-hover:text-purple-200 transition">
                   Tap to read memories & share yours →
                 </p>
               </div>

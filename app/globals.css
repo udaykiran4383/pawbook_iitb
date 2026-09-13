@@ -151,6 +151,28 @@
   }
 }
 
+/*
+ * Pastel surfaces keep light-mode ink in dark mode.
+ *
+ * The animal cards, the profile header and a few call-outs are deliberately
+ * pastel — that is the scrapbook look, and in dark mode they read as bright
+ * cards laid on a dark table, which is fine. What is not fine is that every
+ * `text-foreground` inside them flipped to near-white when the theme did,
+ * leaving white names on pale pink. Re-declaring the ink tokens on the tinted
+ * container means any descendant using the tokens gets dark ink again, with no
+ * per-element dark: variants to keep in sync.
+ */
+.dark .on-tint {
+  --foreground: #2C2416;
+  --muted-foreground: #6B5A4E;
+  --card: #FFFFFF;
+  --card-foreground: #2C2416;
+  --background: #FFF9F5;
+  --border: #E8D4C4;
+  --input: #9C8264;
+  color: var(--foreground);
+}
+
 /* Scrapbook-style paper texture */
 @layer utilities {
   .scrapbook-card {

@@ -65,17 +65,17 @@ export default function PlayfulFeatures() {
     <section className="max-w-6xl mx-auto px-4 pb-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="rounded-3xl border-2 border-amber-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Daily Friendship Mission</p>
+          <p className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Daily Friendship Mission</p>
           <p className="text-base font-semibold text-foreground mt-2">{dailyTip?.tip || 'Loading today’s tip...'}</p>
           <p className="text-xs text-muted-foreground mt-2">Badge unlock: {dailyTip?.badge || 'Care Hero'}</p>
         </div>
 
         <div className="rounded-3xl border-2 border-pink-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Random Kindness Challenge</p>
+            <p className="text-xs font-bold text-pink-700 dark:text-pink-300 uppercase tracking-wide">Random Kindness Challenge</p>
             <button
               onClick={() => setRandomIdea(kindnessIdeas[Math.floor(Math.random() * kindnessIdeas.length)])}
-              className="inline-flex items-center gap-1 rounded-full border border-pink-300 px-3 py-1 text-xs font-bold text-pink-700 hover:bg-pink-50 active:scale-95 transition"
+              className="inline-flex items-center gap-1 rounded-full border border-pink-300 dark:border-pink-700 px-3 py-1 text-xs font-bold text-pink-700 dark:text-pink-300 hover:bg-pink-50 dark:hover:bg-pink-950/40 active:scale-95 transition"
             >
               <Dice5 size={14} />
               Spin
@@ -89,14 +89,14 @@ export default function PlayfulFeatures() {
         </div>
 
         <div className="rounded-3xl border-2 border-blue-200/70 bg-white/80 dark:bg-card p-4 md:p-5 shadow-sm">
-          <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">PawBook Hall of Fame</p>
+          <p className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">PawBook Hall of Fame</p>
           <div className="space-y-2 mt-3">
             {topAnimals.map((animal, index) => (
-              <div key={animal.id} className="flex items-center justify-between rounded-xl bg-blue-50/80 px-3 py-2">
+              <div key={animal.id} className="flex items-center justify-between rounded-xl bg-blue-50/80 dark:bg-muted/60 px-3 py-2">
                 <p className="text-sm font-semibold text-foreground truncate">
                   #{index + 1} {animal.name}
                 </p>
-                <p className="text-xs font-bold text-blue-700 flex items-center gap-1">
+                <p className="text-xs font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1">
                   <Trophy size={12} />
                   {animal.likes}
                 </p>
