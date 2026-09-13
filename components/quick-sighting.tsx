@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Eye, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
-import { campus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 interface QuickSightingProps {
   animalId: number;
@@ -20,6 +20,7 @@ interface QuickSightingProps {
  * The zone is free text and nothing else is captured.
  */
 export default function QuickSighting({ animalId, animalName, homeZone }: QuickSightingProps) {
+  const { campus } = useCampus();
   const [zone, setZone] = useState(homeZone);
   const [done, setDone] = useState(false);
   const [ready, setReady] = useState(false);

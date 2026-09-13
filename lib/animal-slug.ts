@@ -38,6 +38,7 @@ export function animalIdFromSlug(slug: string): number | null {
   return Number.isFinite(id) ? id : null;
 }
 
-export function animalPath(animal: Pick<Animal, 'id' | 'name'>): string {
-  return `/animals/${animalSlug(animal)}`;
+/** '' or '/c/<slug>' — see campusBasePath in lib/campuses.ts. */
+export function animalPath(animal: Pick<Animal, 'id' | 'name'>, basePath = ''): string {
+  return `${basePath}/animals/${animalSlug(animal)}`;
 }

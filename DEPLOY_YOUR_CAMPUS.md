@@ -1,5 +1,15 @@
 # Bring PawBook to your campus
 
+**The fast way — no deployment at all.** This site already serves many
+campuses. Add yours to `lib/campuses.ts` (copy the template at the bottom of
+that file, ten minutes) and open a pull request. Once merged, your campus is
+live at `/c/<your-slug>` with its own animals, map, rules, register and bite
+page. Nothing below is required for that.
+
+**The self-hosted way** — if your institution wants its own copy on its own
+domain — is the rest of this guide.
+
+
 PawBook is a memory book and care log for the animals that live on a campus.
 It started at IIT Bombay. Since 19 May 2026 every educational institution in
 India has a named officer answerable for its campus animals, and PawBook keeps

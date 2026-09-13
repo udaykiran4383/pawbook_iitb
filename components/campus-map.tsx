@@ -7,6 +7,7 @@ import type { Animal } from '@/lib/demo-data';
 import { getMapLayout, scatter, zoneFor, type MapZone } from '@/lib/campus-map';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { getPresence } from '@/lib/presence';
+import { useCampus } from '@/components/campus-provider';
 
 // MapLibre reads `window` on import; load it only on the client, only when shown.
 const GeoCampusMap = dynamic(() => import('@/components/geo-campus-map'), {
@@ -29,7 +30,8 @@ interface CampusMapProps {
 export default function CampusMap({ animals, onOpenProfile }: CampusMapProps) {
   const [open, setOpen] = useState(true);
   const [view, setView] = useState<'sketch' | 'geo'>('sketch');
-  const layout = useMemo(() => getMapLayout(), []);
+  const { campus } = useCampus();
+  const layout = useMemo(() => getMapLayout(campus), [campus]);
   const hasGeo = layout.zones.some((z) => z.geo);
 
   const placed = useMemo(() => {

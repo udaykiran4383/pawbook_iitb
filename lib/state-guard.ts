@@ -14,13 +14,16 @@
  */
 
 import { quantizeCoords } from './duplicate-detection';
+import { slugFromStateId } from './campuses';
 
 const MAX_BODY_BYTES = 2_000_000; // ~2 MB; the real blob is ~70 KB
 const MAX_ANIMALS = 2_000;
 const MAX_LIST_ITEMS = 5_000; // per list, per animal
 
-/** Only the keys the app actually persists may be written. */
-const ALLOWED_STATE_IDS = new Set(['pawbook-animal-storage', 'global']);
+/** Only the keys the app actually persists may be written: one row per registered campus, plus 'global'. */
+function isAllowedStateId(id: string): boolean {
+  return id === 'global' || slugFromStateId(id) !== null;
+}
 
 export interface GuardFailure {
   ok: false;
@@ -37,7 +40,7 @@ const fail = (status: number, error: string): GuardFailure => ({ ok: false, stat
 /** Reject ids we do not recognise, so the table cannot be used as free storage. */
 export function checkStateId(id: unknown): GuardResult {
   if (typeof id !== 'string' || !id) return fail(400, 'Missing id');
-  if (!ALLOWED_STATE_IDS.has(id)) return fail(403, 'Unknown state id');
+  if (!isAllowedStateId(id)) return fail(403, 'Unknown state id');
   return { ok: true };
 }
 

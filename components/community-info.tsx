@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Shield, Phone, ExternalLink, ChevronDown, ChevronUp, Users, MessageCircle } from 'lucide-react';
-import { campus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 export default function CommunityInfo() {
+  const { campus } = useCampus();
   const [expandedSection, setExpandedSection] = useState<string | null>('rules');
 
   const toggleSection = (section: string) => {

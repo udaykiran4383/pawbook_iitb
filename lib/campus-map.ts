@@ -13,7 +13,7 @@
  * falls back to a tidy grid of its configured zones until someone draws it.
  */
 
-import { campus } from './campus';
+import type { CampusConfig } from './campus';
 import { calculateSimilarity } from './duplicate-detection';
 
 export interface MapZone {
@@ -103,7 +103,7 @@ const IITB: MapLayout = {
 };
 
 /** Any other campus: its configured zones laid out on a grid. Better than nothing. */
-function gridLayout(zones: string[]): MapLayout {
+function gridLayout(campus: CampusConfig, zones: string[]): MapLayout {
   const cols = Math.max(2, Math.ceil(Math.sqrt(zones.length)));
   const rows = Math.ceil(zones.length / cols);
   const cellW = 1000 / cols;
@@ -124,8 +124,13 @@ function gridLayout(zones: string[]): MapLayout {
   };
 }
 
-export function getMapLayout(): MapLayout {
-  return campus.shortName === 'IITB' ? IITB : gridLayout(campus.zones);
+export function getMapLayout(campus: CampusConfig): MapLayout {
+  if (campus.shortName === 'IITB') return IITB;
+  const c = campus.bounds;
+  const layout = gridLayout(campus, campus.zones);
+  // Centre the street view on the campus's bounds; zones have no geo yet.
+  layout.center = { lat: (c.minLat + c.maxLat) / 2, lng: (c.minLng + c.maxLng) / 2, zoom: 15 };
+  return layout;
 }
 
 /** Which zone an animal's free-text location belongs to, or null. */

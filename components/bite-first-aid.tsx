@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Droplets, Hospital, Clock, AlertTriangle } from 'lucide-react';
 import { FIRST_AID, LANG_LABEL, OBSERVATION_DAYS, type Lang } from '@/lib/first-aid';
-import { campus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 const TIMER_KEY = 'pawbook_bite_observation_start';
 const LANG_KEY = 'pawbook_first_aid_lang';
@@ -16,6 +16,7 @@ const LANG_KEY = 'pawbook_first_aid_lang';
  * secondary and reads that way.
  */
 export default function BiteFirstAid() {
+  const { campus } = useCampus();
   const [lang, setLang] = useState<Lang>('en');
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);

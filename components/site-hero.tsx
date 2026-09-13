@@ -1,5 +1,7 @@
+'use client';
+
 import { Heart } from 'lucide-react';
-import { campus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 interface SiteHeroProps {
   /**
@@ -22,6 +24,7 @@ interface SiteHeroProps {
  * link preview ever saw — was a blank gradient with no heading at all.
  */
 export default function SiteHero({ stats }: SiteHeroProps) {
+  const { campus } = useCampus();
   return (
     <section className="pt-8 md:pt-10 pb-6 px-4 text-center">
       <div className="max-w-3xl mx-auto">

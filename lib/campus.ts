@@ -62,7 +62,11 @@ function envList(key: string): string[] | undefined {
   return list.length ? list : undefined;
 }
 
-/** The IIT Bombay deployment, which is also the fallback for every field. */
+/**
+ * The default campus for the bare `/` routes. Other campuses live at /c/<slug>
+ * and come from lib/campuses.ts; this object is what `useCampus()` returns
+ * when no provider has set one.
+ */
 const IITB: CampusConfig = {
   name: 'IIT Bombay',
   shortName: 'IITB',

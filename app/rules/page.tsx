@@ -1,13 +1,24 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { campus, appName } from '@/lib/campus';
+import { DEFAULT_CAMPUS_SLUG, campusBasePath, findCampus } from '@/lib/campuses';
 
-export const metadata: Metadata = {
-  title: `How we care for campus animals · ${appName}`,
-  description:
-    `Shared ground rules for feeding and looking after the animals of ${campus.name} — fixed spots, fixed times, cleared bowls, and what to do if someone is hurt.`,
-};
+interface PageProps {
+  params?: Promise<{ campus?: string }>;
+}
+
+async function resolve(params?: PageProps['params']) {
+  const slug = (await params)?.campus ?? DEFAULT_CAMPUS_SLUG;
+  return findCampus(slug) ?? findCampus(DEFAULT_CAMPUS_SLUG)!;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const campus = await resolve(params);
+  return {
+    title: `How we care for campus animals · PawBook ${campus.shortName}`,
+    description: `Shared ground rules for feeding and looking after the animals of ${campus.name} — fixed spots, fixed times, cleared bowls, and what to do if someone is hurt.`,
+  };
+}
 
 /*
  * These are community guidelines, written in the shape that the institution
@@ -45,7 +56,7 @@ const RULES = [
   },
   {
     title: 'If someone is hurt',
-    body: 'File an emergency report in PawBook and say where. Do not try to lift or restrain an injured animal on your own. If you are bitten or scratched: wash the wound under running water with soap for fifteen minutes, then go to a hospital the same day — no exceptions, however small it looks. The full steps, in Hindi and Marathi too, are at /bite.',
+    body: 'File an emergency report in PawBook and say where. Do not try to lift or restrain an injured animal on your own. If you are bitten or scratched: wash the wound under running water with soap for fifteen minutes, then go to a hospital the same day — no exceptions, however small it looks. The full steps, in Hindi and Marathi too, are on the Bitten? page.',
   },
   {
     title: 'Keep the animals out of the record',
@@ -57,16 +68,18 @@ const RULES = [
   },
 ];
 
-export default function RulesPage() {
+export default async function RulesPage({ params }: PageProps) {
+  const campus = await resolve(params);
+  const basePath = campusBasePath(campus.slug);
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link
-          href="/"
+          href={basePath || '/'}
           className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition mb-6"
         >
           <ArrowLeft size={16} />
-          Back to PawBook
+          Back to PawBook {campus.shortName}
         </Link>
 
         <h1 className="text-3xl font-bold text-foreground">How we care for campus animals</h1>

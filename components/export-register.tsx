@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FileDown, ClipboardCopy, Check } from 'lucide-react';
 import { useAnimalStore } from '@/lib/animal-store';
 import { buildRegisterBundle } from '@/lib/export';
-import { campus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 /**
  * Downloads the register the institution can file.
@@ -14,6 +14,7 @@ import { campus } from '@/lib/campus';
  * contributor identities by construction.
  */
 export default function ExportRegister() {
+  const { campus } = useCampus();
   const animals = useAnimalStore((s) => s.animals);
   const [copied, setCopied] = useState(false);
 

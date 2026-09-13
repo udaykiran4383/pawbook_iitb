@@ -5,6 +5,22 @@ import { demoAnimals, Animal, Comment, StudentMemory, MedicalRecord } from './de
 import type { EmergencyCase } from './emergency';
 import type { Observation } from './survey';
 import { appendSighting, newSighting } from './sightings';
+import { DEFAULT_CAMPUS_SLUG, isCampusSlug, stateIdFor } from './campuses';
+
+/**
+ * Which campus's row this store should hydrate from, decided from the URL
+ * before the store exists. Deciding it afterwards — and re-pointing the store
+ * once a provider mounts — races the first hydration and lets one campus's
+ * animals appear on another's page for a moment, or for good.
+ */
+export function campusSlugFromLocation(): string {
+  if (typeof window === 'undefined') return DEFAULT_CAMPUS_SLUG;
+  const m = /^\/c\/([a-z0-9-]+)(?:\/|$)/.exec(window.location.pathname);
+  return m && isCampusSlug(m[1]) ? m[1] : DEFAULT_CAMPUS_SLUG;
+}
+
+/** The persisted key currently in use; the realtime channel follows it. */
+export let activeStateId = stateIdFor(campusSlugFromLocation());
 import { getUserName } from './utils';
 
 interface AnimalStore {
@@ -32,7 +48,10 @@ interface AnimalStore {
 }
 
 function sanitizeAnimals(input: unknown): Animal[] {
-  if (!Array.isArray(input)) return [...demoAnimals];
+  // A row with no animals is an empty campus, not a reason to show IIT
+  // Bombay's demo fixtures. With one deployment serving many campuses that
+  // fallback would seed every new campus with the wrong dogs.
+  if (!Array.isArray(input)) return [];
 
   return input
     .filter((item): item is Partial<Animal> => !!item && typeof item === 'object')
@@ -68,7 +87,7 @@ function sanitizeAnimals(input: unknown): Animal[] {
 export const useAnimalStore = create<AnimalStore>()(
   persist(
     (set) => ({
-      animals: demoAnimals, // Initialize with demo data
+      animals: [], // Filled from the campus's persisted row on hydration.
       // Starts empty on purpose. This list used to be seeded with two invented
       // reports — "Dog with visible injury near sports complex" among them —
       // which rendered on the homepage as though somebody had filed them.
@@ -181,7 +200,7 @@ export const useAnimalStore = create<AnimalStore>()(
       })
     }),
     {
-      name: 'pawbook-animal-storage',
+      name: activeStateId,
       storage: createJSONStorage(() => {
         const hybridStorage: StateStorage = {
           getItem: async (name: string): Promise<string | null> => {
@@ -252,18 +271,27 @@ export const useAnimalStore = create<AnimalStore>()(
   )
 );
 
-// Realtime sync wrapper
-if (typeof window !== 'undefined' && supabase) {
+// Realtime sync: follow whichever campus row this store is bound to. The
+// filter and the localStorage mirror both use activeStateId, so one campus's
+// updates never arrive on another campus's page.
+let realtimeChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+
+export function subscribeRealtime(stateId: string) {
+  if (typeof window === 'undefined' || !supabase) return;
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
   let isSyncing = false;
-  supabase
-    .channel('pawbook_state_changes')
+  realtimeChannel = supabase
+    .channel(`pawbook_state_changes:${stateId}`)
     .on(
       'postgres_changes',
       {
         event: '*',
         schema: 'public',
         table: 'pawbook_state',
-        filter: "id=eq.'pawbook-animal-storage'",
+        filter: `id=eq.${stateId}`,
       },
       (payload: { new?: { data?: { state?: Partial<AnimalStore> } } | null }) => {
         if (!isSyncing && payload.new && 'data' in payload.new) {
@@ -271,19 +299,14 @@ if (typeof window !== 'undefined' && supabase) {
           try {
             const incoming = payload.new?.data?.state;
             const incomingAnimals = sanitizeAnimals(incoming?.animals);
-            // Update the local state
             useAnimalStore.setState((prev) => ({
               ...prev,
               ...(incoming || {}),
               animals: incomingAnimals,
             }));
-            // Sync to localStorage
-            localStorage.setItem('pawbook-animal-storage', JSON.stringify({
+            localStorage.setItem(stateId, JSON.stringify({
               ...(payload.new.data || {}),
-              state: {
-                ...(incoming || {}),
-                animals: incomingAnimals,
-              },
+              state: { ...(incoming || {}), animals: incomingAnimals },
             }));
           } catch (e) {
             console.error('Failed to sync from realtime', e);
@@ -293,4 +316,22 @@ if (typeof window !== 'undefined' && supabase) {
       }
     )
     .subscribe();
+}
+
+subscribeRealtime(activeStateId);
+
+/**
+ * Re-point the store at another campus's row (client-side navigation between
+ * campuses). Order matters: switch the key first so the emptying write below
+ * lands on the new row, not the old one; then clear; then hydrate.
+ */
+export function switchCampusStore(slug: string) {
+  const name = stateIdFor(slug);
+  if (name === activeStateId) return;
+  activeStateId = name;
+  const persist = (useAnimalStore as any).persist;
+  persist?.setOptions?.({ name });
+  useAnimalStore.setState({ animals: [], emergencies: [] });
+  void persist?.rehydrate?.();
+  subscribeRealtime(name);
 }

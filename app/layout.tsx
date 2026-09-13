@@ -4,6 +4,9 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import ThemeToggle from '@/components/theme-toggle'
 import IdentityControl from '@/components/identity-control'
+import { CampusProvider } from '@/components/campus-provider'
+import CampusSwitcher from '@/components/campus-switcher'
+import { DEFAULT_CAMPUS_SLUG } from '@/lib/campuses'
 import { campus, appName } from '@/lib/campus';
 
 const nunito = Nunito({ subsets: ["latin"] });
@@ -39,9 +42,13 @@ export default function RootLayout({
       */}
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <ThemeToggle />
-          <IdentityControl />
-          {children}
+          {/* Routes under /c/[campus] re-wrap with their own campus. */}
+          <CampusProvider slug={DEFAULT_CAMPUS_SLUG}>
+            <CampusSwitcher />
+            <ThemeToggle />
+            <IdentityControl />
+            {children}
+          </CampusProvider>
         </ThemeProvider>
       </body>
     </html>

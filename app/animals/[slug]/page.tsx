@@ -11,14 +11,14 @@ import type { Animal } from '@/lib/demo-data';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
 import { describeRange } from '@/lib/sightings';
 import QuickSighting from '@/components/quick-sighting';
-import { campus, appName } from '@/lib/campus';
+import { DEFAULT_CAMPUS_SLUG, campusBasePath, findCampus } from '@/lib/campuses';
 
 // The underlying row changes as students log care, so don't serve a stale page
 // for long — but do let the CDN absorb a burst of QR scans.
 export const revalidate = 60;
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; campus?: string }>;
 }
 
 /**
@@ -26,16 +26,19 @@ interface PageProps {
  * allowlist — precise coordinates and contributor names cannot reach the
  * markup even if someone adds them to the Animal type later.
  */
-async function loadAnimal(slug: string): Promise<PublicAnimal | null> {
+async function loadAnimal(slug: string, campusSlug: string): Promise<PublicAnimal | null> {
   const id = animalIdFromSlug(slug);
   if (id === null) return null;
-  const animal = await getAnimalById(id);
+  const animal = await getAnimalById(id, campusSlug);
   return animal ? toPublicAnimal(animal) : null;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const animal = await loadAnimal(slug);
+  const { slug, campus: campusSlug = DEFAULT_CAMPUS_SLUG } = await params;
+  const campus = findCampus(campusSlug) ?? findCampus(DEFAULT_CAMPUS_SLUG)!;
+  const appName = `PawBook ${campus.shortName}`;
+  const basePath = campusBasePath(campus.slug);
+  const animal = await loadAnimal(slug, campus.slug);
 
   if (!animal) {
     return { title: `Animal not found · ${appName}` };
@@ -54,7 +57,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${animal.name} · ${appName}`,
       description,
       type: 'profile',
-      url: animalPath(animal),
+      url: animalPath(animal, basePath),
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {
@@ -88,8 +91,10 @@ function Fact({
 }
 
 export default async function AnimalPage({ params }: PageProps) {
-  const { slug } = await params;
-  const animal = await loadAnimal(slug);
+  const { slug, campus: campusSlug = DEFAULT_CAMPUS_SLUG } = await params;
+  const campus = findCampus(campusSlug) ?? findCampus(DEFAULT_CAMPUS_SLUG)!;
+  const basePath = campusBasePath(campus.slug);
+  const animal = await loadAnimal(slug, campus.slug);
 
   if (!animal) notFound();
 
@@ -104,11 +109,11 @@ export default async function AnimalPage({ params }: PageProps) {
     <main className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-background dark:via-background dark:to-background">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link
-          href="/"
+          href={basePath || '/'}
           className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition mb-6"
         >
           <ArrowLeft size={16} />
-          All campus friends
+          All {campus.shortName} friends
         </Link>
 
         <article
@@ -251,7 +256,7 @@ export default async function AnimalPage({ params }: PageProps) {
 
         <div className="text-center mt-6 space-y-3">
           <Link
-            href={`${animalPath(animal)}/poster`}
+            href={`${animalPath(animal, basePath)}/poster`}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-200 rounded-full px-4 py-2 transition"
           >
             <Printer size={15} />

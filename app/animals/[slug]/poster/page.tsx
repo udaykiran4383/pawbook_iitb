@@ -7,38 +7,37 @@ import { animalIdFromSlug, animalPath } from '@/lib/animal-slug';
 import { getAnimalById } from '@/lib/state-server';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { toPublicAnimal, type PublicAnimal } from '@/lib/public-view';
-import { campus, appName } from '@/lib/campus';
+import { DEFAULT_CAMPUS_SLUG, campusBasePath, findCampus } from '@/lib/campuses';
 
 export const revalidate = 300;
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; campus?: string }>;
 }
 
 export const metadata: Metadata = {
-  title: `Printable card · ${appName}`,
+  title: 'Printable card · PawBook',
   // A poster is for printing and pinning up, not for indexing.
   robots: { index: false, follow: false },
 };
 
-function siteOrigin(): string {
-  return campus.siteUrl;
-}
-
 // A poster goes on a public wall, so it gets the same allowlisted view.
-async function loadAnimal(slug: string): Promise<PublicAnimal | null> {
+async function loadAnimal(slug: string, campusSlug: string): Promise<PublicAnimal | null> {
   const id = animalIdFromSlug(slug);
   if (id === null) return null;
-  const animal = await getAnimalById(id);
+  const animal = await getAnimalById(id, campusSlug);
   return animal ? toPublicAnimal(animal) : null;
 }
 
 export default async function PosterPage({ params }: PageProps) {
-  const { slug } = await params;
-  const animal = await loadAnimal(slug);
+  const { slug, campus: campusSlug = DEFAULT_CAMPUS_SLUG } = await params;
+  const campus = findCampus(campusSlug) ?? findCampus(DEFAULT_CAMPUS_SLUG)!;
+  const basePath = campusBasePath(campus.slug);
+  const siteOrigin = () => campus.siteUrl;
+  const animal = await loadAnimal(slug, campus.slug);
   if (!animal) notFound();
 
-  const url = `${siteOrigin()}${animalPath(animal)}`;
+  const url = `${siteOrigin()}${animalPath(animal, basePath)}`;
 
   // Level M survives a bit of rain and scuffing on a pinned-up sheet while
   // staying sparse enough to scan from a phone held at arm's length.
@@ -74,7 +73,7 @@ export default async function PosterPage({ params }: PageProps) {
         <div className="max-w-[420px] mx-auto">
           <div className="no-print flex items-center justify-between mb-4">
             <Link
-              href={animalPath(animal)}
+              href={animalPath(animal, basePath)}
               className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition"
             >
               <ArrowLeft size={16} />

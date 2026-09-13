@@ -13,10 +13,10 @@
  */
 
 import type { Animal } from './demo-data';
+import { DEFAULT_CAMPUS_SLUG, stateIdFor } from './campuses';
 
-const STATE_ID = 'pawbook-animal-storage';
-
-export async function getAnimalsFromDb(): Promise<Animal[]> {
+export async function getAnimalsFromDb(campusSlug: string = DEFAULT_CAMPUS_SLUG): Promise<Animal[]> {
+  const STATE_ID = stateIdFor(campusSlug);
   try {
     // Imported lazily and inside the try so absent credentials degrade here
     // instead of taking down every route that touches this module.
@@ -37,7 +37,7 @@ export async function getAnimalsFromDb(): Promise<Animal[]> {
   }
 }
 
-export async function getAnimalById(id: number): Promise<Animal | null> {
-  const animals = await getAnimalsFromDb();
+export async function getAnimalById(id: number, campusSlug: string = DEFAULT_CAMPUS_SLUG): Promise<Animal | null> {
+  const animals = await getAnimalsFromDb(campusSlug);
   return animals.find((animal) => animal?.id === id) ?? null;
 }

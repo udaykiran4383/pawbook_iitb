@@ -4,11 +4,13 @@ import { useState, useMemo } from 'react';
 import { useAnimalStore } from '@/lib/animal-store';
 import { getUserName } from '@/lib/utils';
 import { sortEmergencies, type EmergencyCase } from '@/lib/emergency';
+import { useCampus } from '@/components/campus-provider';
 import { AlertCircle, X, Upload } from 'lucide-react';
 import ImageUpload from './image-upload';
 import Link from 'next/link';
 
 export default function EmergencyCases() {
+  const { basePath } = useCampus();
   const [showModal, setShowModal] = useState(false);
   // Reports come from the shared store, so they survive a reload and are
   // visible to everyone. This list used to be seeded in useState with two
@@ -71,7 +73,7 @@ export default function EmergencyCases() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
           🚨 Emergency Cases
-          <Link href="/bite" className="ml-2 text-xs font-bold text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-full px-3 py-1 hover:bg-red-50 dark:hover:bg-red-950/40 whitespace-nowrap">
+          <Link href={`${basePath}/bite`} className="ml-2 text-xs font-bold text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-full px-3 py-1 hover:bg-red-50 dark:hover:bg-red-950/40 whitespace-nowrap">
             Bitten? Read this
           </Link>
         </h2>

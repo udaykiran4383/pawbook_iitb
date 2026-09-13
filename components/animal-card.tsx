@@ -11,7 +11,7 @@ import { getFallbackAvatar } from '@/lib/animal-avatar';
 import { animalPath } from '@/lib/animal-slug';
 import { optimizeImageUrl } from '@/lib/image-url';
 import { getPresence } from '@/lib/presence';
-import { appName } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 // Silhouette fallback lives in lib/animal-avatar.ts so every surface matches.
 
@@ -29,6 +29,7 @@ interface AnimalCardProps {
 }
 
 export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
+  const { campus, basePath } = useCampus();
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState('');
@@ -63,11 +64,11 @@ export default function AnimalCard({ animal, onOpenProfile }: AnimalCardProps) {
     setSharing(true);
     try {
       // window.location.href meant sharing any animal shared the homepage.
-      const url = new URL(animalPath(animal), window.location.origin).toString();
+      const url = new URL(animalPath(animal, basePath), window.location.origin).toString();
       const text = `Meet ${animal.name} at ${animal.location}! 🐾 ${animal.description}`;
 
       if (navigator.share) {
-        await navigator.share({ title: `${animal.name} - ${appName}`, text, url });
+        await navigator.share({ title: `${animal.name} - PawBook ${campus.shortName}`, text, url });
       } else {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareNote('Link copied! 🐾');

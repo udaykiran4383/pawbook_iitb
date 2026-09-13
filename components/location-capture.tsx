@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { MapPin, Loader, Check, X } from 'lucide-react';
 import { quantizeCoords, type Coords } from '@/lib/duplicate-detection';
-import { onCampus } from '@/lib/campus';
+import { useCampus } from '@/components/campus-provider';
 
 interface LocationCaptureProps {
   value: Coords | null;
@@ -31,6 +31,7 @@ type Status = 'idle' | 'locating' | 'captured' | 'denied' | 'unavailable' | 'ina
  * weaker duplicate check.
  */
 export default function LocationCapture({ value, onChange }: LocationCaptureProps) {
+  const { campus } = useCampus();
   const [status, setStatus] = useState<Status>(value ? 'captured' : 'idle');
 
   const capture = () => {
@@ -50,7 +51,9 @@ export default function LocationCapture({ value, onChange }: LocationCaptureProp
         });
         // A fix from across the city is worse than none: it would make a distant
         // animal look like a duplicate of whatever is nearest to the bad point.
-        if (!onCampus(coords.lat, coords.lng)) {
+        const b = campus.bounds;
+        const onCampus = coords.lat >= b.minLat && coords.lat <= b.maxLat && coords.lng >= b.minLng && coords.lng <= b.maxLng;
+        if (!onCampus) {
           setStatus('inaccurate');
           onChange(null);
           return;

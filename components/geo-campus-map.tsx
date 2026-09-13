@@ -5,6 +5,7 @@ import type { Animal } from '@/lib/demo-data';
 import { getMapLayout, zoneFor, type MapZone } from '@/lib/campus-map';
 import { getAnimalAvatar } from '@/lib/animal-avatar';
 import { getPresence } from '@/lib/presence';
+import { useCampus } from '@/components/campus-provider';
 
 interface GeoCampusMapProps {
   animals: Animal[];
@@ -56,7 +57,8 @@ export default function GeoCampusMap({ animals, onOpenProfile }: GeoCampusMapPro
   const libRef = useRef<any>(null);
   // Stable reference: a fresh object each render would re-run the marker
   // effect every render and cancel its own work before it finished.
-  const layout = useMemo(() => getMapLayout(), []);
+  const { campus } = useCampus();
+  const layout = useMemo(() => getMapLayout(campus), [campus]);
 
   useEffect(() => {
     let cancelled = false;
